@@ -328,43 +328,50 @@ jobs:
           
           tar -C "${{ runner.temp }}" -xf "${tarball}";
           $extracted_dir = Join-Path -Path "${{ runner.temp }}" -ChildPath "xz-${{ env.LIBLZMA_WINDOWS_VERSION }}";
-          $build_dir = Join-Path -Path "${{ runner.temp }}" -ChildPath "build-xz";
           
-          $cmake_generator = "Unix Makefiles";
-          $install_prefix = "/usr/local";
-          if ("${{ runner.os }}" -eq "Windows")
+          if ("${{ runner.os }}" -eq "macOS")
           {
-            $install_prefix = "${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}";
-            if ("${{ matrix.lua-version }}".StartsWith("luajit"))
-            {
-              $cmake_generator = "MinGW Makefiles";
-            }
-            else
-            {
-              $cmake_generator = "NMake Makefiles";
-            }
-          }
-          
-          cmake `
-            -G "${cmake_generator}" `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DBUILD_SHARED_LIBS=ON `
-            --install-prefix "${install_prefix}" `
-            -S "${extracted_dir}" `
-            -B "${build_dir}";
-          
-          cmake --build "${build_dir}" --config Release;
-          
-          if ("${{ runner.os }}" -eq "Windows")
-          {
-            cmake --install "${build_dir}" --config Release;
+            cd "${extracted_dir}";
+            ./configure;
+            make;
+            make install;
           }
           else
           {
-            sudo cmake --install "${build_dir}" --config Release;
-
-            if ("${{ runner.os }}" -eq "Linux")
+            $build_dir = Join-Path -Path "${{ runner.temp }}" -ChildPath "build-xz";
+            $cmake_generator = "Unix Makefiles";
+            $install_prefix = "/usr/local";
+          
+            if ("${{ runner.os }}" -eq "Windows")
             {
+              $install_prefix = "${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}";
+              if ("${{ matrix.lua-version }}".StartsWith("luajit"))
+              {
+                $cmake_generator = "MinGW Makefiles";
+              }
+              else
+              {
+                $cmake_generator = "NMake Makefiles";
+              }
+            }
+            
+            cmake `
+              -G "${cmake_generator}" `
+              -DCMAKE_BUILD_TYPE=Release `
+              -DBUILD_SHARED_LIBS=ON `
+              --install-prefix "${install_prefix}" `
+              -S "${extracted_dir}" `
+              -B "${build_dir}";
+            
+            cmake --build "${build_dir}" --config Release;
+            
+            if ("${{ runner.os }}" -eq "Windows")
+            {
+              cmake --install "${build_dir}" --config Release;
+            }
+            else
+            {
+              sudo cmake --install "${build_dir}" --config Release;
               sudo ldconfig;
             }
           }
