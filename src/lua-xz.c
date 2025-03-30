@@ -68,7 +68,7 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     lua_Integer arg_check;
 
     uint32_t preset;
-    lzma_action check;
+    lzma_check check;
 
     /* reader variables and args */
     lua_Integer arg_memlimit;
@@ -126,7 +126,7 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
         }
 
         arg_check = luaL_checkinteger(L, 2);
-        check = (lzma_action)arg_check;
+        check = (lzma_check)arg_check;
 
         if (lua_isinteger(L, 3))
         {
