@@ -68,11 +68,13 @@
 #endif
 
 #if LUA_VERSION_NUM < 503
-static int lua_isinteger(lua_State *L, int idx)
+static int lua_xz_isinteger(lua_State *L, int idx)
 {
     lua_Integer d = lua_tointeger(L, idx);
     return !(d == 0 && !lua_isnumber(L, idx));
 }
+#else
+#define lua_xz_isinteger lua_isinteger
 #endif
 
 /* start of lua_xz */
@@ -144,7 +146,7 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     if (is_writer)
     {
         preset = LZMA_PRESET_DEFAULT;
-        if (lua_isinteger(L, 1))
+        if (lua_xz_isinteger(L, 1))
         {
             arg_preset = lua_tointeger(L, 1);
             luaL_argcheck(L, 0 <= arg_preset && arg_preset <= 9, 1, "preset must be an integer in the interval [0, 9]");
@@ -171,7 +173,7 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
         arg_check = luaL_checkinteger(L, 2);
         check = (lzma_check)arg_check;
 
-        if (lua_isinteger(L, 3))
+        if (lua_xz_isinteger(L, 3))
         {
             arg_buffer_size = lua_tointeger(L, 3);
         }
@@ -240,7 +242,7 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
 
         flags = (uint32_t)arg_flags;
 
-        if (lua_isinteger(L, 3))
+        if (lua_xz_isinteger(L, 3))
         {
             arg_buffer_size = lua_tointeger(L, 3);
         }
