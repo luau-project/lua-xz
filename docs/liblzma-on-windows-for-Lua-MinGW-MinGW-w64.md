@@ -15,7 +15,7 @@ The easiest way to build ```liblzma``` from the source code with a generic MinGW
 
 1. Download and install ```cmake```;
 
-2. If ```make``` didn't come as part of your MinGW / MinGW-w64 installation, then download and install the latest ```ninja``` from [https://github.com/ninja-build/ninja/releases/latest](https://github.com/ninja-build/ninja/releases/latest), and place it on your system environment PATH variable;
+2. If ```mingw32-make``` didn't come as part of your MinGW / MinGW-w64 installation, then download and install the latest ```ninja``` from [https://github.com/ninja-build/ninja/releases/latest](https://github.com/ninja-build/ninja/releases/latest), and place it on your system environment PATH variable;
 
 3. Open a command prompt (```cmd```);
 
