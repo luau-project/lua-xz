@@ -32,41 +32,6 @@
 #define LUA_XZ_BINDING_VERSION_PATCH "1"
 #define LUA_XZ_BINDING_VERSION LUA_XZ_BINDING_VERSION_MAJOR "." LUA_XZ_BINDING_VERSION_MINOR "." LUA_XZ_BINDING_VERSION_PATCH
 
-/*
-** Define LUA_MAXINTEGER and LUA_MININTEGER:
-** 
-** these values are not defined on Lua 5.3 or older
-*/
-#if !(defined(LUA_MAXINTEGER) && defined(LUA_MININTEGER))
-#if LUA_VERSION_NUM < 503
-/* On Lua 5.1 and Lua 5.2, lua_Integer is a ptrdiff_t */
-#define LUA_MAXINTEGER PTRDIFF_MAX
-#define LUA_MININTEGER PTRDIFF_MIN
-#elif LUA_VERSION_NUM == 503
-#if LUA_INT_TYPE == LUA_INT_INT
-#define LUA_MAXINTEGER INT_MAX
-#define LUA_MININTEGER INT_MIN
-#elif LUA_INT_TYPE == LUA_INT_LONG
-#define LUA_MAXINTEGER LONG_MAX
-#define LUA_MININTEGER LONG_MIN
-#elif LUA_INT_TYPE == LUA_INT_LONGLONG
-#if defined(LLONG_MAX)
-#define LUA_MAXINTEGER LLONG_MAX
-#define LUA_MININTEGER LLONG_MIN
-#elif defined(LUA_USE_WINDOWS)
-#define LUA_MAXINTEGER _I64_MAX
-#define LUA_MININTEGER _I64_MIN
-#else
-#error "Compiler does not support 'long long'"
-#endif
-#endif
-#endif
-#endif
-
-#if defined(LUA_MAXINTEGER) && defined(LUA_MININTEGER) && (LUA_MAXINTEGER-20 < 32760 || LUA_MAXINTEGER-20 < 2147483640L)
-#error "Lua integers must be able to store at least 64-bits"
-#endif
-
 #ifndef LUA_XZ_EXPORT /* { */
 #ifdef LUA_XZ_BUILD_STATIC /* { */
 #define LUA_XZ_EXPORT
