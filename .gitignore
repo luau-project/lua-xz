@@ -1,0 +1,8 @@
+*.o
+*.so
+*.dll
+*.lib
+*.bash
+*.sh
+*.xz
+.vscode
