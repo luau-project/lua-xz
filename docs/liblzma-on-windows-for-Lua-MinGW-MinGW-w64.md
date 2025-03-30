@@ -4,7 +4,7 @@ This page describes the process to setup ```liblzma``` on Windows, building it w
 
 ## Overview
 
-The easiest way to build ```liblzma``` from the source code with a generic MinGW / MinGW-w64 toolchain goes through [CMake](https://cmake.org/) build system, paired with [GNU Make](https://www.gnu.org/software/make/) or [Ninja](https://ninja-build.org/).
+The easiest way to build ```liblzma``` from the source code with a generic MinGW / MinGW-w64 toolchain goes through [CMake](https://cmake.org/) build system, paired with [GNU Make](https://www.gnu.org/software/make/) for MinGW / MinGW-w64 (```mingw32-make```) or [Ninja](https://ninja-build.org/).
 
 ## Table of Contents
 
@@ -46,9 +46,9 @@ The easiest way to build ```liblzma``` from the source code with a generic MinGW
     curl --version
     ```
 
-7. Confirm that either ```make``` or ```ninja``` are installed by printing the version of the tool:
+7. Confirm that either ```mingw32-make``` or ```ninja``` are installed by printing the version of the tool:
 
-    * ```make --version```
+    * ```mingw32-make --version```
     * ```ninja --version```
 
 ### Building liblzma
@@ -86,7 +86,7 @@ Once you finished the initial steps in the [Requirements](#requirements) section
 
 5. Remove previous build directories (```liblzma-build-dir```) if they exist, configure the build of ```liblzma```, then build ```liblzma``` and install it
 
-    * If you have ```make```, then run
+    * If you have ```mingw32-make```, then run
 
         ```cmd
         IF EXIST ".\liblzma-build-dir\" RMDIR /Q /S ".\liblzma-build-dir\"
