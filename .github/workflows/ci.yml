@@ -334,7 +334,7 @@ jobs:
             cd "${extracted_dir}";
             ./configure;
             make;
-            make install;
+            sudo make install;
           }
           else
           {
