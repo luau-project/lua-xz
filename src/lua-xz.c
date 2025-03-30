@@ -70,8 +70,8 @@
 #if LUA_VERSION_NUM < 503
 static int lua_isinteger(lua_State *L, int idx)
 {
-    lua_Integer d = lua_tointeger(L, narg);
-    return !(d == 0 && !lua_isnumber(L, narg));
+    lua_Integer d = lua_tointeger(L, idx);
+    return !(d == 0 && !lua_isnumber(L, idx));
 }
 #endif
 
