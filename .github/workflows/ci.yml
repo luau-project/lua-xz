@@ -376,6 +376,12 @@ jobs:
             }
           }
       
+      - name: On Windows, add the directory of liblzma DLL to system environment PATH variable
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          $install_prefix_bin = Join-Path -Path "${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" -ChildPath "bin";
+          Add-Content "${{ github.path }}" "${install_prefix_bin}";
+      
       - name: Setup Lua
         uses: luarocks/gh-actions-lua@v10
         with:
