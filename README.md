@@ -18,6 +18,9 @@
 
 * [Installation](#installation)
 * [Usage](#usage)
+    * [Compress a file](#compress-a-file)
+    * [Decompress a file](#decompress-a-file)
+    * [Simulate compression in chunks](#simulate-compression-in-chunks)
 * [Constants](#constants)
 * [Classes](#classes)
     * [stream (reader)](#stream-reader)
@@ -31,7 +34,7 @@
 > [!IMPORTANT]
 > 
 > On each operating system or software distribution, ```lua-xz``` depends on the ```liblzma``` library:
->   * On Windows, see the [docs](./docs/README.md#documentation) to install ```liblzma```;
+>   * On Windows, read the [docs](./docs/README.md#documentation) to learn how to install ```liblzma``` in a form that it plays nicely with Lua and LuaRocks;
 >   * On Debian-based (e.g.: Ubuntu) distributions:
 > 
 >     ```bash
@@ -54,7 +57,15 @@ luarocks install lua-xz
 
 ## Usage
 
+Through the streaming interface, three examples are shown:
+
+* Compress a file
+* Decompress a file
+* Simulate compression in chunks
+
 ### Compress a file
+
+For this example, we compress the ```README.md``` file of this project, which might even become larger than the original due its small size. In the end of the script execution, a file named  ```README.md.xz``` is written to disk.
 
 ```lua
 -- load the library
@@ -144,6 +155,8 @@ stream:close()
 
 ### Decompress a file
 
+For this example, we decompress the ```README.md.xz``` file created by [Compress a file](#compress-a-file) above, and we output a file named ```copy-of-README.md```, which should be a perfect copy of this ```README.md``` file.
+
 ```lua
 -- load the library
 local xz = require("lua-xz")
@@ -224,6 +237,83 @@ input:close()
 -- close the reader stream to free resources
 -- tip: it is automatically freed on garbage collection
 stream:close()
+```
+
+### Simulate compression in chunks
+
+As a last example, we simulate compression in chunks. The idea is that data can come in chunks from HTTPS requests, and we feed a writer stream to compress the data coming from the internet to disk. In the end, decompression is performed on the saved file on disk, and the inputs are matched against the decompressed output.
+
+```lua
+local xz = require("lua-xz")
+
+-- simulate content to be streamed to the encoder
+local inputs = {"hello", " ", "world"}
+
+-- table to hold the output of each `update' call
+-- on both writer / reader streams
+local outputs = {}
+
+--[[ start of encoding ]]
+-- create a writer stream
+local writer_stream = xz.stream.writer(xz.PRESET_DEFAULT, xz.CHECK_CRC64)
+
+-- push each element in the `inputs' table
+-- onto the writer stream
+for _, IN in ipairs(inputs) do
+    table.insert(outputs, writer_stream:update(IN))
+end
+table.insert(outputs, writer_stream:finish())
+
+-- close the writer stream to free resources
+-- tip: it is automatically freed on garbage collection
+writer_stream:close()
+
+-- write each compressed chunk to the destination file
+local output_file = assert(io.open("lua-xz.xz", "wb"), "failed to open the file lua-xz.xz for writing")
+for _, OUT in ipairs(outputs) do
+    output_file:write(OUT)
+end
+output_file:close()
+--[[ end of encoding]]
+
+--[[ start of decoding ]]
+-- create a reader stream
+local input_stream = xz.stream.reader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
+
+-- clear the outputs to fill it again
+-- with the decoding output
+for i = #outputs, 1, -1 do
+    table.remove(outputs, i)
+end
+
+-- open the file created above
+-- to feed the reader stream
+-- with content to decode
+local input_file = assert(io.open("lua-xz.xz", "rb"), "failed to open the file lua-xz.xz for reading")
+
+-- read chunks of 8 bytes
+local chunk_size = 8
+
+-- read first chunk
+local OUT = input_file:read(chunk_size)
+
+-- keep reading the file while
+-- the chunk is not nil
+while (OUT ~= nil) do
+    table.insert(outputs, input_stream:update(OUT))
+    OUT = input_file:read(chunk_size)
+end
+table.insert(outputs, input_stream:finish())
+input_file:close()
+
+-- close the reader stream to free resources
+-- tip: it is automatically freed on garbage collection
+input_stream:close()
+--[[ end of decoding]]
+
+-- make sure that the decoded data
+-- matches the initial inputs
+assert(table.concat(inputs) == table.concat(outputs))
 ```
 
 ## Constants
