@@ -1,5 +1,7 @@
 # lua-xz
 
+[![CI](https://github.com/luau-project/lua-xz/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
+
 > [!IMPORTANT]
 > 
 > **DO NOT** use this library while it is not available on [LuaRocks](https://luarocks.org/), because it is not ready yet. It is under development / testing before the initial release.
