@@ -24,12 +24,9 @@
 
 #include "lua-xz.h"
 
-#include <luaconf.h>
 #include <lauxlib.h>
 #include <lualib.h>
 #include <lzma.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 /*
@@ -90,8 +87,20 @@ static int lua_xz_newindex(lua_State *L)
 typedef struct taglua_xz_stream {
     lzma_stream strm;
     int is_writer;
-    uint8_t *buffer;
+    int is_finished;
+    int is_closed;
+
     size_t buffer_size;
+
+    /*
+    ** note: this field must be the last member
+    ** 
+    ** we employ the same idea
+    ** used by Roberto on PIL
+    ** to create a double array
+    ** 
+    */
+    uint8_t buffer[1];
 } lua_xz_stream;
 
 #define LUA_XZ_STREAM_METATABLE "lua_xz_stream_metatable"
@@ -101,6 +110,14 @@ static lua_xz_stream *lua_xz_check_stream(lua_State *L, int index)
     void *ud = luaL_checkudata(L, index, LUA_XZ_STREAM_METATABLE);
     luaL_argcheck(L, ud != NULL, index, "lua_xz_stream expected");
     return (lua_xz_stream *)ud;
+}
+
+static lua_xz_stream *lua_xz_check_active_stream(lua_State *L, int index)
+{
+    lua_xz_stream *stream = lua_xz_check_stream(L, index);
+    luaL_argcheck(L, !stream->is_finished, 1, "lua_xz_stream cannot be used after it was finished");
+    luaL_argcheck(L, !stream->is_closed, 1, "lua_xz_stream cannot be used after it was closed");
+    return stream;
 }
 
 static int lua_xz_stream_new(lua_State *L, int is_writer)
@@ -127,8 +144,26 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     lua_Integer arg_buffer_size;
     void *ud;
     void *buff;
+
+    /* validate buffer size to be able
+    ** to create a lua_xz_stream
+    ** with the correct size
+    */
+    if (lua_xz_isinteger(L, 3))
+    {
+        arg_buffer_size = lua_tointeger(L, 3);
+    }
+    else
+    {
+        arg_buffer_size = LUA_XZ_BUFFER_SIZE;
+    }
+
+    if (arg_buffer_size <= 0)
+    {
+        return luaL_error(L, "Buffer size must be a positive integer");
+    }
     
-    ud = lua_newuserdata(L, sizeof(lua_xz_stream));
+    ud = lua_newuserdata(L, sizeof(lua_xz_stream) + (arg_buffer_size - 1) * sizeof(uint8_t));
     if (ud == NULL)
     {
         return luaL_error(L, "Failed to create lua_xz_stream userdata");
@@ -140,8 +175,9 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     stream = (lua_xz_stream *)ud;
     memset(ud, 0, sizeof(lua_xz_stream));
     stream->is_writer = is_writer;
-    stream->buffer = NULL;
-    stream->buffer_size = 0;
+    stream->is_finished = 0;
+    stream->is_closed = 0;
+    stream->buffer_size = (size_t)arg_buffer_size;
 
     if (is_writer)
     {
@@ -172,30 +208,6 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
 
         arg_check = luaL_checkinteger(L, 2);
         check = (lzma_check)arg_check;
-
-        if (lua_xz_isinteger(L, 3))
-        {
-            arg_buffer_size = lua_tointeger(L, 3);
-        }
-        else
-        {
-            arg_buffer_size = BUFSIZ;
-        }
-
-        if (arg_buffer_size <= 0)
-        {
-            return luaL_error(L, "Buffer size must be a positive integer");
-        }
-
-        stream->buffer_size = (size_t)arg_buffer_size;
-
-        buff = malloc(stream->buffer_size);
-        if (buff == NULL)
-        {
-            return luaL_error(L, "Memory allocation for the output buffer failed");
-        }
-
-        stream->buffer = (uint8_t *)buff;
 
         ret = lzma_easy_encoder(
             &stream->strm,
@@ -241,30 +253,6 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
         }
 
         flags = (uint32_t)arg_flags;
-
-        if (lua_xz_isinteger(L, 3))
-        {
-            arg_buffer_size = lua_tointeger(L, 3);
-        }
-        else
-        {
-            arg_buffer_size = BUFSIZ;
-        }
-
-        if (arg_buffer_size <= 0)
-        {
-            return luaL_error(L, "Buffer size must be a positive integer");
-        }
-
-        stream->buffer_size = (size_t)arg_buffer_size;
-
-        buff = malloc(stream->buffer_size);
-        if (buff == NULL)
-        {
-            return luaL_error(L, "Memory allocation for the output buffer failed");
-        }
-
-        stream->buffer = (uint8_t *)buff;
 
         ret = lzma_stream_decoder(
             &stream->strm,
@@ -329,31 +317,37 @@ static int lua_xz_stream_code_check_error(lua_State *L, lua_xz_stream *stream, l
 
 static int lua_xz_stream_update(lua_State *L)
 {
-    lua_xz_stream *stream = lua_xz_check_stream(L, 1);
+    lua_xz_stream *stream = lua_xz_check_active_stream(L, 1);
     size_t input_size = 0;
     const char *input_str = luaL_checklstring(L, 2, &input_size);
     const uint8_t *input = (const uint8_t *)input_str;
     lzma_ret ret;
     size_t write_size;
-    luaL_argcheck(L, stream->buffer != NULL, 1, "lua_xz_stream is not opened");
-    luaL_argcheck(L, input_size > 0, 2, "input must be a non-empty string");
 
-    stream->strm.next_in = input;
-    stream->strm.avail_in = input_size;
-    stream->strm.next_out = stream->buffer;
-    stream->strm.avail_out = stream->buffer_size;
-    ret = lzma_code(&stream->strm, LZMA_RUN);
-    lua_xz_stream_code_check_error(L, stream, ret);
-
-    write_size = stream->buffer_size - stream->strm.avail_out;
-
-    if (write_size > 0)
+    if (input_size == 0)
     {
-        lua_pushlstring(L, (const char *)stream->buffer, write_size);
+        lua_pushstring(L, "");
     }
     else
     {
-        lua_pushstring(L, "");
+        stream->strm.next_in = input;
+        stream->strm.avail_in = input_size;
+        stream->strm.next_out = stream->buffer;
+        stream->strm.avail_out = stream->buffer_size;
+    
+        ret = lzma_code(&stream->strm, LZMA_RUN);
+        lua_xz_stream_code_check_error(L, stream, ret);
+    
+        write_size = stream->buffer_size - stream->strm.avail_out;
+    
+        if (write_size > 0)
+        {
+            lua_pushlstring(L, (const char *)stream->buffer, write_size);
+        }
+        else
+        {
+            lua_pushstring(L, "");
+        }
     }
 
     return 1;
@@ -361,13 +355,15 @@ static int lua_xz_stream_update(lua_State *L)
 
 static int lua_xz_stream_finish(lua_State *L)
 {
-    lua_xz_stream *stream = lua_xz_check_stream(L, 1);
+    lua_xz_stream *stream = lua_xz_check_active_stream(L, 1);
     lzma_ret ret;
     size_t write_size;
-    luaL_argcheck(L, stream->buffer != NULL, 1, "lua_xz_stream is not opened");
 
+    stream->strm.next_in = NULL;
+    stream->strm.avail_in = 0;
     stream->strm.next_out = stream->buffer;
     stream->strm.avail_out = stream->buffer_size;
+
     ret = lzma_code(&stream->strm, LZMA_FINISH);
     lua_xz_stream_code_check_error(L, stream, ret);
 
@@ -398,11 +394,10 @@ static int lua_xz_stream_reader(lua_State *L)
 static int lua_xz_stream_close(lua_State *L)
 {
     lua_xz_stream *stream = lua_xz_check_stream(L, 1);
-    if (stream->buffer != NULL)
+    if (!stream->is_closed)
     {
         lzma_end(&stream->strm);
-        free((void *)stream->buffer);
-        stream->buffer = NULL;
+        stream->is_closed = 1;
     }
     return 0;
 }

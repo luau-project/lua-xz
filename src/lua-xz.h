@@ -32,6 +32,17 @@
 #define LUA_XZ_BINDING_VERSION_PATCH "1"
 #define LUA_XZ_BINDING_VERSION LUA_XZ_BINDING_VERSION_MAJOR "." LUA_XZ_BINDING_VERSION_MINOR "." LUA_XZ_BINDING_VERSION_PATCH
 
+/*
+** 
+** default size of the output buffer
+** used by stream's `update' function
+** when the user didn't provide it
+** 
+*/
+#ifndef LUA_XZ_BUFFER_SIZE
+#define LUA_XZ_BUFFER_SIZE ((size_t)LUAL_BUFFERSIZE)
+#endif
+
 #ifndef LUA_XZ_EXPORT /* { */
 #ifdef LUA_XZ_BUILD_STATIC /* { */
 #define LUA_XZ_EXPORT
