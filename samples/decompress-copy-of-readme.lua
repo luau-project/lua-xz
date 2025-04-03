@@ -8,15 +8,29 @@ local filename = "README.md.xz"
 local decompressed_filename = "copy-of-" .. (filename:gsub("%.xz$", ""))
 
 -- create a reader stream
+-- 
 -- first parameter:
 --  a memory limit in bytes
 --  can be chosen
 -- second parameter:
 --  decoding flags
+-- 
 -- note: 1) xz.MEMLIMIT_UNLIMITED does not use a limit
 --       2) xz.CONCATENATED decodes all the streams,
 --       not only the first stream.
-local stream = xz.stream.reader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
+-- 
+-- tip: always check for errors
+local ok, stream = pcall(
+    function()
+        return xz.stream.reader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
+    end
+)
+
+-- an error occurred ?
+if (not ok) then
+    -- raise the error
+    error(stream)
+end
 
 -- open the input file to feed
 -- its content to the decompression stream
@@ -34,7 +48,10 @@ local output = assert(
 
 -- define the number of bytes
 -- of the chunk to be read
--- from the input file
+-- from the input file.
+-- In a real world scenario,
+-- 8kb (8 * 1024) would be
+-- a reasonable value
 local chunk_size = 64
 
 -- read the chunk from file
@@ -50,7 +67,19 @@ local decompressed_chunk
 while (chunk ~= nil) do
     -- feed the stream with the chunk
     -- and get the decompressed chunk
-    decompressed_chunk = stream:update(chunk)
+    -- 
+    -- tip: always check for errors
+    ok, decompressed_chunk = pcall(
+        function()
+            return stream:update(chunk)
+        end
+    )
+
+    -- an error occurred ?
+    if (not ok) then
+        -- raise the error
+        error(decompressed_chunk)
+    end
 
     -- write the decompressed chunk
     -- to the output file
@@ -62,7 +91,24 @@ end
 
 -- finish the stream and get
 -- the last decompressed chunk
-decompressed_chunk = stream:finish()
+-- 
+-- tip: always check for errors
+ok, decompressed_chunk = pcall(
+    function()
+        return stream:finish()
+    end
+)
+
+-- an error occurred ?
+if (not ok) then
+    -- raise the error
+    error(decompressed_chunk)
+end
+
+-- close the reader stream to free resources
+-- 
+-- tip: it is automatically freed on garbage collection
+stream:close()
 
 -- write the decompressed chunk
 -- to the output file
@@ -73,7 +119,3 @@ output:close()
 
 -- close the input file
 input:close()
-
--- close the reader stream to free resources
--- tip: it is automatically freed on garbage collection
-stream:close()

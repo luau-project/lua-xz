@@ -8,10 +8,12 @@ local filename = "README.md"
 local compressed_filename = filename .. ".xz"
 
 -- create a writer stream
+-- 
 -- first parameter:
 --  the compression preset
 -- second parameter:
 --  the integrity check
+-- 
 -- note:
 --  1) preset can be:
 --      * an integer [0, 9]
@@ -20,7 +22,19 @@ local compressed_filename = filename .. ".xz"
 --  2) if the .xz file needs to be
 --  decompressed with XZ Embedded, use
 --  xz.CHECK_CRC32 instead.
-local stream = xz.stream.writer(xz.PRESET_DEFAULT, xz.CHECK_CRC64)
+-- 
+-- tip: always check for errors
+local ok, stream = pcall(
+    function()
+        return xz.stream.writer(xz.PRESET_DEFAULT, xz.CHECK_CRC64)
+    end
+)
+
+-- an error occurred ?
+if (not ok) then
+    -- raise the error
+    error(stream)
+end
 
 -- open the input file to feed
 -- its content to the compression stream
@@ -38,7 +52,10 @@ local output = assert(
 
 -- define the number of bytes
 -- of the chunk to be read
--- from the input file
+-- from the input file.
+-- In a real world scenario,
+-- 8kb (8 * 1024) would be
+-- a reasonable value
 local chunk_size = 64
 
 -- read the chunk from file
@@ -54,7 +71,19 @@ local compressed_chunk
 while (chunk ~= nil) do
     -- feed the stream with the chunk
     -- and get the compressed chunk
-    compressed_chunk = stream:update(chunk)
+    -- 
+    -- tip: always check for errors
+    ok, compressed_chunk = pcall(
+        function()
+            return stream:update(chunk)
+        end
+    )
+
+    -- an error occurred ?
+    if (not ok) then
+        -- raise the error
+        error(compressed_chunk)
+    end
 
     -- write the compressed chunk
     -- to the output file
@@ -66,7 +95,24 @@ end
 
 -- finish the stream and get
 -- the last compressed chunk
-compressed_chunk = stream:finish()
+-- 
+-- tip: always check for errors
+ok, compressed_chunk = pcall(
+    function()
+        return stream:finish()
+    end
+)
+
+-- an error occurred ?
+if (not ok) then
+    -- raise the error
+    error(compressed_chunk)
+end
+
+-- close the writer stream to free resources
+-- 
+-- tip: it is automatically freed on garbage collection
+stream:close()
 
 -- write the compressed chunk
 -- to the output file
@@ -77,7 +123,3 @@ output:close()
 
 -- close the input file
 input:close()
-
--- close the writer stream to free resources
--- tip: it is automatically freed on garbage collection
-stream:close()

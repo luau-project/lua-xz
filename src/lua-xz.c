@@ -81,6 +81,27 @@ static int lua_xz_newindex(lua_State *L)
 {
     return luaL_error(L, "Read-only object");
 }
+
+static void *lua_xz_malloc(lua_State *L, size_t size)
+{
+    void *ud;
+    lua_Alloc allocf = lua_getallocf(L, ud);
+    return allocf(ud, NULL, 0, size);
+}
+
+static void *lua_xz_realloc(lua_State *L, void *ptr, size_t size)
+{
+    void *ud;
+    lua_Alloc allocf = lua_getallocf(L, ud);
+    return allocf(ud, ptr, ptr == NULL ? 0 : 1, size);
+}
+
+static void lua_xz_free(lua_State *L, void *ptr)
+{
+    void *ud;
+    lua_Alloc allocf = lua_getallocf(L, ud);
+    allocf(ud, ptr, ptr == NULL ? 0 : 1, 0);
+}
 /* end of lua_xz */
 
 /* start of lua_xz_stream */
@@ -91,16 +112,21 @@ typedef struct taglua_xz_stream {
     int is_closed;
 
     size_t buffer_size;
-
+    
     /*
-    ** note: this field must be the last member
-    ** 
-    ** we employ the same idea
-    ** used by Roberto on PIL
-    ** to create a double array
-    ** 
+    ** note:
+    **   buffer member must be the last
+    **   field of the lua_xz_stream.
+    **   The reason is that we follow
+    **   the same idea employed by
+    **   Roberto Ierusalimschy in the
+    **   double array example on PIL.
+    **   In short, we allocate
+    **   a struct with size
+    **   sizeof(lua_xz_stream) + (buffer_size - 1) * sizeof(uint8_t)
+    **   at userdata creation. 
     */
-    uint8_t buffer[1];
+   uint8_t buffer[1];
 } lua_xz_stream;
 
 #define LUA_XZ_STREAM_METATABLE "lua_xz_stream_metatable"
@@ -142,10 +168,11 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     lua_xz_stream *stream;
     lzma_ret ret;
     lua_Integer arg_buffer_size;
+    size_t buffer_size;
     void *ud;
-    void *buff;
 
-    /* validate buffer size to be able
+    /*
+    ** validate buffer size to be able
     ** to create a lua_xz_stream
     ** with the correct size
     */
@@ -162,8 +189,9 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     {
         return luaL_error(L, "Buffer size must be a positive integer");
     }
-    
-    ud = lua_newuserdata(L, sizeof(lua_xz_stream) + (arg_buffer_size - 1) * sizeof(uint8_t));
+
+    buffer_size = (size_t)arg_buffer_size;
+    ud = lua_newuserdata(L, sizeof(lua_xz_stream) + (buffer_size - 1) * sizeof(uint8_t));
     if (ud == NULL)
     {
         return luaL_error(L, "Failed to create lua_xz_stream userdata");
@@ -173,11 +201,16 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     lua_setmetatable(L, -2);
 
     stream = (lua_xz_stream *)ud;
-    memset(ud, 0, sizeof(lua_xz_stream));
+    memset(&stream->strm, 0, sizeof(lzma_stream));
     stream->is_writer = is_writer;
     stream->is_finished = 0;
     stream->is_closed = 0;
-    stream->buffer_size = (size_t)arg_buffer_size;
+    stream->buffer_size = buffer_size;
+
+    if (stream->buffer == NULL)
+    {
+        return luaL_error(L, "Memory allocation for the output buffer failed");
+    }
 
     if (is_writer)
     {
@@ -377,6 +410,8 @@ static int lua_xz_stream_finish(lua_State *L)
     {
         lua_pushstring(L, "");
     }
+
+    stream->is_finished = 1;
 
     return 1;
 }

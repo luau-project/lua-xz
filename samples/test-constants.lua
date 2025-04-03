@@ -14,10 +14,17 @@ local constants = {
 
 for _, c in ipairs(constants) do
     local t = type(c.value)
-    assert(
-        c.type == t,
-        "type mismatch (" .. c.text .. "). Expected: (" .. c.type .. "), Got: (" .. t .. ")"
-    )
+    if (c.type ~= t) then
+        local errfmt = "type mismatch (%s). Expected: (%s), Got: (%s)"
+        error(errfmt:format(c.text, c.type, t))
+    end
 
-    print(c.text, c.value, " (", t, ")")
+    local msgfmt
+    if (t == 'string') then
+        msgfmt = "%22s\t%22s\t(%s)"
+    else
+        msgfmt = "%22s\t%22d\t(%s)"
+    end
+    
+    print(msgfmt:format(c.text, c.value, t))
 end

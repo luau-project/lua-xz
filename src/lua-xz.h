@@ -40,7 +40,7 @@
 ** 
 */
 #ifndef LUA_XZ_BUFFER_SIZE
-#define LUA_XZ_BUFFER_SIZE ((size_t)LUAL_BUFFERSIZE)
+#define LUA_XZ_BUFFER_SIZE LUAL_BUFFERSIZE
 #endif
 
 #ifndef LUA_XZ_EXPORT /* { */
