@@ -533,14 +533,13 @@ A stream to compress data to .xz format
 ##### writer
 
 * *Description*: Creates a writer stream to compress data to .xz format
-* *Signature*: ```xz.stream.writer(preset, check [, buffersize ])```
+* *Signature*: ```xz.stream.writer(preset, check)```
 * *Parameters*: 
     * *preset* (```integer | string```): Compression level as an integer [0, 9] or string with a single digit [0-9] occasionally followed by 'e' character to indicate extreme compression preset. For instance, these are valid values:
         * an integer: 0, ..., 9;
         * a string: "0", ..., "9";
         * a string: "0e", ..., "9e".
     * *check* (```integer```): Type of the integrity check to calculate from uncompressed data;
-    * *buffersize* (```integer | nil```): The size of the output buffer to allocate memory at stream creation. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file;
 * *Return* (```userdata```): An instance of the stream writer class.
 
 #### Instance methods
