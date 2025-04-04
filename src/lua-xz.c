@@ -64,15 +64,128 @@
 #error "Lua integers must be able to store at least 64-bits"
 #endif
 
+/* start of auxiliary functions */
 #if LUA_VERSION_NUM < 503
-static int lua_xz_isinteger(lua_State *L, int idx)
+static int lua_xz_aux_isinteger(lua_State *L, int idx)
 {
+    /*
+    ** the body of this function
+    ** came from `luaL_checkinteger'
+    ** at https://www.lua.org/source/5.1/lauxlib.c.html
+    */
     lua_Integer d = lua_tointeger(L, idx);
     return !(d == 0 && !lua_isnumber(L, idx));
 }
 #else
-#define lua_xz_isinteger lua_isinteger
+#define lua_xz_aux_isinteger lua_isinteger
 #endif
+
+static void *lua_xz_aux_malloc(lua_State *L, size_t size)
+{
+    void *ud;
+    lua_Alloc allocf = lua_getallocf(L, ud);
+    return allocf(ud, NULL, 0, size);
+}
+
+static void *lua_xz_aux_realloc(lua_State *L, void *ptr, size_t size)
+{
+    void *ud;
+    lua_Alloc allocf = lua_getallocf(L, ud);
+    return allocf(ud, ptr, ptr == NULL ? 0 : 1, size);
+}
+
+static void lua_xz_aux_free(lua_State *L, void *ptr)
+{
+    void *ud;
+    lua_Alloc allocf = lua_getallocf(L, ud);
+    allocf(ud, ptr, ptr == NULL ? 0 : 1, 0);
+}
+/* end of auxiliary functions */
+
+/* start of lua_xz_aux_buffers */
+#define LUA_XZ_AUX_BUFFERS_METATABLE "lua_xz_aux_buffers_metatable"
+
+typedef struct taglua_xz_aux_buffers
+{
+    /* size of the input buffer */
+    size_t input_buffer_size;
+
+    /* input buffer */
+    uint8_t *input_buffer;
+
+    /* size of the output buffer*/
+    size_t output_buffer_size;
+
+    /*
+    ** note:
+    **   output_buffer member must be the last
+    **   field of the lua_xz_aux_buffers.
+    **   The reason is that we follow
+    **   the same idea employed by
+    **   Roberto Ierusalimschy in the
+    **   double array example on PIL.
+    **   In short, we allocate
+    **   a struct with size
+    **   sizeof(lua_xz_aux_buffers) + (output_buffer_size - 1) * sizeof(uint8_t)
+    **   at userdata creation. 
+    */
+    uint8_t output_buffer[1];
+} lua_xz_aux_buffers;
+
+/* resizes the input buffer */
+static void *lua_xz_aux_buffers_resize_input_buffer(lua_State *L, int index, size_t new_size)
+{
+    void *ud;
+    lua_Alloc allocf = lua_getallocf(L, &ud);
+    lua_xz_aux_buffers *b = (lua_xz_aux_buffers *)lua_touserdata(L, index);
+    void *temp = allocf(ud, b->input_buffer, b->input_buffer_size, new_size);
+    if (temp == NULL && new_size > 0)
+    {
+        luaL_error(L, "Failed to allocate memory to resize the auxiliary buffer");
+    }
+    b->input_buffer = (uint8_t *)temp;
+    b->input_buffer_size = new_size;
+    return temp;
+}
+
+static int lua_xz_aux_buffers_gc(lua_State *L)
+{
+    lua_xz_aux_buffers_resize_input_buffer(L, 1, 0);
+    return 0;
+}
+
+static const luaL_Reg lua_xz_aux_buffers_functions[] = {
+    { "__gc", lua_xz_aux_buffers_gc },
+    { NULL, NULL }
+};
+
+static lua_xz_aux_buffers *lua_xz_aux_buffers_new(lua_State *L, size_t output_buffer_size)
+{
+    lua_xz_aux_buffers *b;
+    void *ud = lua_newuserdata(L, sizeof(lua_xz_aux_buffers) + (output_buffer_size - 1) * sizeof(uint8_t));
+    if (ud == NULL)
+    {
+        luaL_error(L, "Failed to allocate memory for the auxiliary buffer");
+    }
+
+    if (luaL_newmetatable(L, LUA_XZ_AUX_BUFFERS_METATABLE) > 0)
+    {
+#if LUA_VERSION_NUM < 502
+        luaL_register(L, NULL, lua_xz_aux_buffers_functions);
+#else
+        luaL_setfuncs(L, lua_xz_aux_buffers_functions, 0);
+#endif        
+    }
+    lua_setmetatable(L, -2);
+
+    b = (lua_xz_aux_buffers *)ud;
+    b->input_buffer = NULL;
+    b->input_buffer_size = 0;
+    b->output_buffer_size = output_buffer_size;
+
+    return b;
+}
+/* end of lua_xz_aux_buffers */
 
 /* start of lua_xz */
 #define LUA_XZ_METATABLE "lua_xz_metatable"
@@ -81,52 +194,16 @@ static int lua_xz_newindex(lua_State *L)
 {
     return luaL_error(L, "Read-only object");
 }
-
-static void *lua_xz_malloc(lua_State *L, size_t size)
-{
-    void *ud;
-    lua_Alloc allocf = lua_getallocf(L, ud);
-    return allocf(ud, NULL, 0, size);
-}
-
-static void *lua_xz_realloc(lua_State *L, void *ptr, size_t size)
-{
-    void *ud;
-    lua_Alloc allocf = lua_getallocf(L, ud);
-    return allocf(ud, ptr, ptr == NULL ? 0 : 1, size);
-}
-
-static void lua_xz_free(lua_State *L, void *ptr)
-{
-    void *ud;
-    lua_Alloc allocf = lua_getallocf(L, ud);
-    allocf(ud, ptr, ptr == NULL ? 0 : 1, 0);
-}
 /* end of lua_xz */
 
 /* start of lua_xz_stream */
 typedef struct taglua_xz_stream {
+
     lzma_stream strm;
     int is_writer;
-    int is_finished;
+    int executed;
     int is_closed;
 
-    size_t buffer_size;
-    
-    /*
-    ** note:
-    **   buffer member must be the last
-    **   field of the lua_xz_stream.
-    **   The reason is that we follow
-    **   the same idea employed by
-    **   Roberto Ierusalimschy in the
-    **   double array example on PIL.
-    **   In short, we allocate
-    **   a struct with size
-    **   sizeof(lua_xz_stream) + (buffer_size - 1) * sizeof(uint8_t)
-    **   at userdata creation. 
-    */
-   uint8_t buffer[1];
 } lua_xz_stream;
 
 #define LUA_XZ_STREAM_METATABLE "lua_xz_stream_metatable"
@@ -141,7 +218,7 @@ static lua_xz_stream *lua_xz_check_stream(lua_State *L, int index)
 static lua_xz_stream *lua_xz_check_active_stream(lua_State *L, int index)
 {
     lua_xz_stream *stream = lua_xz_check_stream(L, index);
-    luaL_argcheck(L, !stream->is_finished, 1, "lua_xz_stream cannot be used after it was finished");
+    luaL_argcheck(L, !stream->executed, 1, "lua_xz_stream cannot be used after it was executed");
     luaL_argcheck(L, !stream->is_closed, 1, "lua_xz_stream cannot be used after it was closed");
     return stream;
 }
@@ -171,27 +248,7 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     size_t buffer_size;
     void *ud;
 
-    /*
-    ** validate buffer size to be able
-    ** to create a lua_xz_stream
-    ** with the correct size
-    */
-    if (lua_xz_isinteger(L, 3))
-    {
-        arg_buffer_size = lua_tointeger(L, 3);
-    }
-    else
-    {
-        arg_buffer_size = LUA_XZ_BUFFER_SIZE;
-    }
-
-    if (arg_buffer_size <= 0)
-    {
-        return luaL_error(L, "Buffer size must be a positive integer");
-    }
-
-    buffer_size = (size_t)arg_buffer_size;
-    ud = lua_newuserdata(L, sizeof(lua_xz_stream) + (buffer_size - 1) * sizeof(uint8_t));
+    ud = lua_newuserdata(L, sizeof(lua_xz_stream));
     if (ud == NULL)
     {
         return luaL_error(L, "Failed to create lua_xz_stream userdata");
@@ -203,19 +260,13 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     stream = (lua_xz_stream *)ud;
     memset(&stream->strm, 0, sizeof(lzma_stream));
     stream->is_writer = is_writer;
-    stream->is_finished = 0;
+    stream->executed = 0;
     stream->is_closed = 0;
-    stream->buffer_size = buffer_size;
-
-    if (stream->buffer == NULL)
-    {
-        return luaL_error(L, "Memory allocation for the output buffer failed");
-    }
 
     if (is_writer)
     {
         preset = LZMA_PRESET_DEFAULT;
-        if (lua_xz_isinteger(L, 1))
+        if (lua_xz_aux_isinteger(L, 1))
         {
             arg_preset = lua_tointeger(L, 1);
             luaL_argcheck(L, 0 <= arg_preset && arg_preset <= 9, 1, "preset must be an integer in the interval [0, 9]");
@@ -309,111 +360,222 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     return 1;
 }
 
-static int lua_xz_stream_code_check_error(lua_State *L, lua_xz_stream *stream, lzma_ret ret)
+/* 
+** this function follows the pattern
+** https://github.com/tukaani-project/xz/raw/c3cb1e53a114ac944f559fe7cac45dbf48cca156/doc/examples/01_compress_easy.c
+** to compress data, and
+** https://github.com/tukaani-project/xz/raw/c3cb1e53a114ac944f559fe7cac45dbf48cca156/doc/examples/02_decompress.c
+** to decompress data
+** 
+** on top of that,
+** we added a producer / consumer
+** pattern to the lzma_stream
+*/
+static int lua_xz_stream_exec(lua_State *L)
 {
-    if (ret != LZMA_OK && ret != LZMA_STREAM_END)
+    lua_xz_stream *stream = lua_xz_check_active_stream(L, 1);
+
+    lzma_ret ret;
+    size_t write_size;
+    lzma_stream *s;
+    size_t produced_data_size = 0;
+    const char *produced_data;
+
+    /* 
+    ** input buffer allocated on stack, but
+    ** switch to a dynamically allocated
+    ** input buffer by `lua_xz_aux_buffers *b'
+    ** to be able to hold a copy to the
+    ** last produced data
+    */
+    uint8_t input_buffer[LUA_XZ_BUFFER_SIZE];
+
+    /* 
+    ** dynamically allocated
+    ** (input and output) buffers to hold
+    ** data for the lzma_stream
+    */
+    lua_xz_aux_buffers *b;
+
+    /*
+    ** use LZMA_RUN until the producer function
+    ** returns nil or none, because
+    ** a produced nil or none signals
+    ** that it is time to finish the stream
+    ** by setting LZMA_FINISH
+    */
+    lzma_action action = LZMA_RUN;
+
+    lua_Integer arg_output_buffer_size;
+    size_t output_buffer_size;
+
+    /* prevent exec from running again */
+    stream->executed = 1;
+
+    /*
+    ** validate buffer size to be able
+    ** to create the output buffer
+    ** of lua_xz_aux_buffers with correct size
+    */
+    if (lua_xz_aux_isinteger(L, 4))
     {
-        if (stream->is_writer)
+        arg_output_buffer_size = lua_tointeger(L, 4);
+    }
+    else
+    {
+        arg_output_buffer_size = LUA_XZ_BUFFER_SIZE;
+    }
+
+    if (arg_output_buffer_size <= 0)
+    {
+        return luaL_error(L, "Buffer size must be a positive integer");
+    }
+
+    output_buffer_size = (size_t)arg_output_buffer_size;
+
+    /* assert that producer is a function */
+    luaL_checktype(L, 2, LUA_TFUNCTION);
+
+    /* assert that consumer is a function */
+    luaL_checktype(L, 3, LUA_TFUNCTION);
+
+    /* create the aux buffers */
+    b = lua_xz_aux_buffers_new(L, output_buffer_size);
+
+    s = &stream->strm;
+
+    s->next_in = NULL;
+    s->avail_in = 0;
+    s->next_out = b->output_buffer;
+    s->avail_out = b->output_buffer_size;
+
+    while (1)
+    {
+        if (s->avail_in == 0 && action != LZMA_FINISH)
         {
-            switch (ret)
+            /* push the producer function */
+            lua_pushvalue(L, 2);
+            
+            if (lua_pcall(L, 0, 1, 0) == 0)
             {
-            case LZMA_MEM_ERROR:
-                return luaL_error(L, "Memory allocation failed");
-            case LZMA_DATA_ERROR:
-                return luaL_error(L, "File size limits exceeded");
-            default:
-                return luaL_error(L, "Unknown error, possibly a bug");
+                if (lua_isnoneornil(L, -1))
+                {
+                    s->next_in = NULL;
+                    s->avail_in = 0;
+                    action = LZMA_FINISH;
+                }
+                else
+                {
+                    produced_data = luaL_checklstring(L, -1, &produced_data_size);
+
+                    if (produced_data_size > sizeof(input_buffer))
+                    {
+                        /* input buffer on stack is not enough, fallback to the dynamic buffer */
+
+                        if (b->input_buffer == NULL || produced_data_size > b->input_buffer_size)
+                        {
+                            /* dynamic input buffer is small, grow it and copy data */
+
+                            lua_xz_aux_buffers_resize_input_buffer(L, -2, produced_data_size);
+                            s->next_in = b->input_buffer;
+                            s->avail_in = produced_data_size;
+                            memcpy((void *)b->input_buffer, (const void *)produced_data, produced_data_size);
+                        }
+                        else
+                        {
+                            /* dynamic input buffer is enough, copy data to it */
+
+                            s->next_in = b->input_buffer;
+                            s->avail_in = produced_data_size;
+                            memcpy((void *)b->input_buffer, (const void *)produced_data, produced_data_size);
+                        }
+                    }
+                    else
+                    {
+                        /* input buffer on stack is enough, copy data to it */
+
+                        s->next_in = (uint8_t *)produced_data;
+                        s->avail_in = produced_data_size;
+                        memcpy((void *)input_buffer, (const void *)produced_data, produced_data_size);
+                    }
+
+                    /* remove the produced data */
+                    lua_pop(L, 1);
+                }
+            }
+            else
+            {
+                return luaL_error(L, lua_tostring(L, -1));
             }
         }
-        else
+
+        /* do the encoding / decoding */
+        ret = lzma_code(s, action);
+
+        /* output buffer is full or compression finished successfully */
+        if (s->avail_out == 0 || ret == LZMA_STREAM_END)
         {
-            switch (ret)
+            write_size = b->output_buffer_size - s->avail_out;
+
+            /* push the consumer function */
+            lua_pushvalue(L, 3);
+
+            /* push the arg of the consumer function */
+            lua_pushlstring(L, (const char *)b->output_buffer, write_size);
+
+            /* call the consumer function */
+            if (lua_pcall(L, 1, 0, 0) == 0)
             {
-            case LZMA_MEM_ERROR:
-                return luaL_error(L, "Memory allocation failed");
-            case LZMA_FORMAT_ERROR:
-                return luaL_error(L, "The input is not in the .xz format");
-            case LZMA_OPTIONS_ERROR:
-                return luaL_error(L, "Unsupported compression options");
-            case LZMA_DATA_ERROR:
-                return luaL_error(L, "Compressed file is corrupt");
-            case LZMA_BUF_ERROR:
-                return luaL_error(L, "Compressed file is truncated or otherwise corrupt");
-            default:
-                return luaL_error(L, "Unknown error, possibly a bug");
+                s->next_out = b->output_buffer;
+                s->avail_out = b->output_buffer_size;
+            }
+            else
+            {
+                return luaL_error(L, lua_tostring(L, -1));
+            }
+        }
+
+        if (ret != LZMA_OK)
+        {
+            if (ret == LZMA_STREAM_END)
+            {
+                return 0;
+            }
+
+            if (stream->is_writer)
+            {
+                switch (ret)
+                {
+                case LZMA_MEM_ERROR:
+                    return luaL_error(L, "Memory allocation failed in the writer stream");
+                case LZMA_DATA_ERROR:
+                    return luaL_error(L, "File size limits exceeded");
+                default:
+                    return luaL_error(L, "Unknown error, possibly a bug in the writer stream");
+                }
+            }
+            else
+            {
+                switch (ret)
+                {
+                case LZMA_MEM_ERROR:
+                    return luaL_error(L, "Memory allocation failed in the reader stream");
+                case LZMA_FORMAT_ERROR:
+                    return luaL_error(L, "The input is not in the .xz format");
+                case LZMA_OPTIONS_ERROR:
+                    return luaL_error(L, "Unsupported compression options");
+                case LZMA_DATA_ERROR:
+                    return luaL_error(L, "Compressed file is corrupt");
+                case LZMA_BUF_ERROR:
+                    return luaL_error(L, "Compressed file is truncated or otherwise corrupt");
+                default:
+                    return luaL_error(L, "Unknown error, possibly a bug in the reader stream");
+                }
             }
         }
     }
 
     return 0;
-}
-
-static int lua_xz_stream_update(lua_State *L)
-{
-    lua_xz_stream *stream = lua_xz_check_active_stream(L, 1);
-    size_t input_size = 0;
-    const char *input_str = luaL_checklstring(L, 2, &input_size);
-    const uint8_t *input = (const uint8_t *)input_str;
-    lzma_ret ret;
-    size_t write_size;
-
-    if (input_size == 0)
-    {
-        lua_pushstring(L, "");
-    }
-    else
-    {
-        stream->strm.next_in = input;
-        stream->strm.avail_in = input_size;
-        stream->strm.next_out = stream->buffer;
-        stream->strm.avail_out = stream->buffer_size;
-    
-        ret = lzma_code(&stream->strm, LZMA_RUN);
-        lua_xz_stream_code_check_error(L, stream, ret);
-    
-        write_size = stream->buffer_size - stream->strm.avail_out;
-    
-        if (write_size > 0)
-        {
-            lua_pushlstring(L, (const char *)stream->buffer, write_size);
-        }
-        else
-        {
-            lua_pushstring(L, "");
-        }
-    }
-
-    return 1;
-}
-
-static int lua_xz_stream_finish(lua_State *L)
-{
-    lua_xz_stream *stream = lua_xz_check_active_stream(L, 1);
-    lzma_ret ret;
-    size_t write_size;
-
-    stream->strm.next_in = NULL;
-    stream->strm.avail_in = 0;
-    stream->strm.next_out = stream->buffer;
-    stream->strm.avail_out = stream->buffer_size;
-
-    ret = lzma_code(&stream->strm, LZMA_FINISH);
-    lua_xz_stream_code_check_error(L, stream, ret);
-
-    write_size = stream->buffer_size - stream->strm.avail_out;
-
-    if (write_size > 0)
-    {
-        lua_pushlstring(L, (const char *)stream->buffer, write_size);
-    }
-    else
-    {
-        lua_pushstring(L, "");
-    }
-
-    stream->is_finished = 1;
-
-    return 1;
 }
 
 static int lua_xz_stream_writer(lua_State *L)
@@ -431,7 +593,16 @@ static int lua_xz_stream_close(lua_State *L)
     lua_xz_stream *stream = lua_xz_check_stream(L, 1);
     if (!stream->is_closed)
     {
+        /* free the lzma_stream */
         lzma_end(&stream->strm);
+
+        /* if input_buffer was allocated, free it */
+        // if (stream->input_buffer != NULL)
+        // {
+        //     lua_xz_aux_free(L, (void *)stream->input_buffer);
+        // }
+
+        /* prevent it from being called again */
         stream->is_closed = 1;
     }
     return 0;
@@ -444,9 +615,8 @@ static int lua_xz_stream_newindex(lua_State *L)
 
 static const luaL_Reg lua_xz_stream_functions[] = {
     {"close", lua_xz_stream_close},
-    {"finish", lua_xz_stream_finish},
+    {"exec", lua_xz_stream_exec},
     {"reader", lua_xz_stream_reader},
-    {"update", lua_xz_stream_update},
     {"writer", lua_xz_stream_writer},
     {"__gc", lua_xz_stream_close},
     {NULL, NULL}

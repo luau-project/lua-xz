@@ -32,52 +32,47 @@ do
         "failed to open the file lua-xz.xz for writing"
     )
 
-    -- save a variable to hold each compressed_chunk
-    local compressed_chunk
+    -- define a producer function
+    -- to feed uncompressed data
+    -- to be encoded by the writer stream
+    local inputs_start = 1
+    local function producer()
+        local element
+        if (inputs_start <= #inputs) then
+            element = inputs[inputs_start]
+            inputs_start = inputs_start + 1
+        end
+        return element
+    end
 
-    for _, IN in ipairs(inputs) do
-        -- feed the writer stream with the IN chunk
-        -- and get the compressed chunk
+    -- define a consumer function
+    -- to handle compressed chunks
+    -- emitted by the writer stream
+    local function consumer(compressed_chunk)
+        output_file:write(compressed_chunk)
+    end
+
+    do
+        -- execute the stream
         -- 
         -- tip: always check for errors
-        ok, compressed_chunk = pcall(
+        local ok, exec_err = pcall(
             function()
-                return writer_stream:update(IN)
+                writer_stream:exec(producer, consumer)
             end
         )
 
         -- an error occurred ?
         if (not ok) then
             -- raise the error
-            error(compressed_chunk)
+            error(exec_err)
         end
-
-        -- write the compressed chunk to the output file
-        output_file:write(compressed_chunk)
-    end
-
-    -- get the last compressed chunk
-    -- 
-    -- tip: always check for errors
-    ok, compressed_chunk = pcall(
-        function()
-            return writer_stream:finish()
-        end
-    )
-
-    -- an error occurred ?
-    if (not ok) then
-        -- raise the error
-        error(compressed_chunk)
     end
 
     -- close the writer stream to free resources
     -- 
     -- tip: it is automatically freed on garbage collection
     writer_stream:close()
-
-    -- write the last compressed chunk to the output file
-    output_file:write(compressed_chunk)
 
     -- close the output file
     output_file:close()
@@ -103,70 +98,54 @@ do
         "failed to open the file lua-xz.xz for reading"
     )
 
-    -- define the number of bytes
-    -- of the chunk to be read
-    -- from the input file.
-    -- In a real world scenario,
-    -- 8kb (8 * 1024) would be
-    -- a reasonable value
-    local chunk_size = 64
+    -- define a producer function
+    -- to feed compressed data
+    -- to be decoded by the reader stream
+    local function producer()
 
-    -- read first chunk
-    local OUT = input_file:read(chunk_size)
+        -- define the number of bytes
+        -- to be read from the input file
+        -- in a single chunk.
+        -- In a real world scenario,
+        -- 8kb (8 * 1024) would be
+        -- a reasonable value
+        local chunk_size = 64
 
-    -- save a variable to hold each decompressed_chunk
-    local decompressed_chunk
+        -- read the chunk from file
+        local chunk = input_file:read(chunk_size)
 
-    -- keep reading the file while
-    -- the chunk is not nil
-    while (OUT ~= nil) do
-        -- feed the reader stream stream with the OUT chunk
-        -- and get the decompressed chunk
+        -- return the chunk read
+        return chunk
+    end
+
+    -- define a consumer function
+    -- to handle decompressed chunks
+    -- emitted by the reader stream
+    local function consumer(decompressed_chunk)
+        table.insert(outputs, decompressed_chunk)
+    end
+
+    do
+        -- execute the stream
         -- 
         -- tip: always check for errors
-        ok, decompressed_chunk = pcall(
+        local ok, exec_err = pcall(
             function()
-                return reader_stream:update(OUT)
+                reader_stream:exec(producer, consumer)
             end
         )
-
+    
         -- an error occurred ?
         if (not ok) then
             -- raise the error
-            error(decompressed_chunk)
+            error(exec_err)
         end
-
-        -- save the decompressed chunk
-        -- in the `outputs' table
-        table.insert(outputs, decompressed_chunk)
-
-        -- read the next chunk from the file
-        OUT = input_file:read(chunk_size)
-    end
-
-    -- grab the last decompressed chunk
-    -- 
-    -- tip: always check for errors
-    ok, decompressed_chunk = pcall(
-        function()
-            return reader_stream:finish()
-        end
-    )
-
-    -- an error occurred ?
-    if (not ok) then
-        -- raise the error
-        error(decompressed_chunk)
     end
 
     -- close the reader stream to free resources
     -- 
     -- tip: it is automatically freed on garbage collection
     reader_stream:close()
-    
-    -- save the last decompressed chunk
-    -- in the `outputs' table
-    table.insert(outputs, decompressed_chunk)
 
     -- close the file
     input_file:close()

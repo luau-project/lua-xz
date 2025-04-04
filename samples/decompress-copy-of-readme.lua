@@ -46,73 +46,54 @@ local output = assert(
     "failed to open " .. decompressed_filename .. " file for writing"
 )
 
--- define the number of bytes
--- of the chunk to be read
--- from the input file.
--- In a real world scenario,
--- 8kb (8 * 1024) would be
--- a reasonable value
-local chunk_size = 64
+-- define a producer function
+-- to feed compressed data
+-- to be decoded by the reader stream
+local function producer()
 
--- read the chunk from file
-local chunk = input:read(chunk_size)
+    -- define the number of bytes
+    -- to be read from the input file
+    -- in a single chunk.
+    -- In a real world scenario,
+    -- 8kb (8 * 1024) would be
+    -- a reasonable value
+    local chunk_size = 64
 
--- keep a variable to receive
--- the decompressed chunk from the
--- reader stream
-local decompressed_chunk
+    -- read the chunk from file
+    local chunk = input:read(chunk_size)
 
--- keep reading the file
--- while there is data to read
-while (chunk ~= nil) do
-    -- feed the stream with the chunk
-    -- and get the decompressed chunk
+    -- return the chunk read
+    return chunk
+end
+
+-- define a consumer function
+-- to handle decompressed chunks
+-- emitted by the reader stream
+local function consumer(decompressed_chunk)
+    output:write(decompressed_chunk)
+end
+
+do
+    -- execute the stream
     -- 
     -- tip: always check for errors
-    ok, decompressed_chunk = pcall(
+    local ok, exec_err = pcall(
         function()
-            return stream:update(chunk)
+            stream:exec(producer, consumer)
         end
     )
 
     -- an error occurred ?
     if (not ok) then
         -- raise the error
-        error(decompressed_chunk)
+        error(exec_err)
     end
-
-    -- write the decompressed chunk
-    -- to the output file
-    output:write(decompressed_chunk)
-
-    -- read the next chunk from the input file
-    chunk = input:read(chunk_size)
-end
-
--- finish the stream and get
--- the last decompressed chunk
--- 
--- tip: always check for errors
-ok, decompressed_chunk = pcall(
-    function()
-        return stream:finish()
-    end
-)
-
--- an error occurred ?
-if (not ok) then
-    -- raise the error
-    error(decompressed_chunk)
 end
 
 -- close the reader stream to free resources
 -- 
 -- tip: it is automatically freed on garbage collection
 stream:close()
-
--- write the decompressed chunk
--- to the output file
-output:write(decompressed_chunk)
 
 -- close the output file
 output:close()
