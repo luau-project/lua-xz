@@ -79,27 +79,6 @@ static int lua_xz_aux_isinteger(lua_State *L, int idx)
 #else
 #define lua_xz_aux_isinteger lua_isinteger
 #endif
-
-static void *lua_xz_aux_malloc(lua_State *L, size_t size)
-{
-    void *ud;
-    lua_Alloc allocf = lua_getallocf(L, ud);
-    return allocf(ud, NULL, 0, size);
-}
-
-static void *lua_xz_aux_realloc(lua_State *L, void *ptr, size_t size)
-{
-    void *ud;
-    lua_Alloc allocf = lua_getallocf(L, ud);
-    return allocf(ud, ptr, ptr == NULL ? 0 : 1, size);
-}
-
-static void lua_xz_aux_free(lua_State *L, void *ptr)
-{
-    void *ud;
-    lua_Alloc allocf = lua_getallocf(L, ud);
-    allocf(ud, ptr, ptr == NULL ? 0 : 1, 0);
-}
 /* end of auxiliary functions */
 
 /* start of lua_xz_aux_buffers */
