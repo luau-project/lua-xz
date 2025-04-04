@@ -1,5 +1,10 @@
 local xz = require("lua-xz")
 
+local function format_integer(val, n)
+    local s = tostring(val)
+    return (" "):rep(n - #s) .. s
+end
+
 local constants = {
     {text = "liblzma version:", value = xz._VERSION, type = "string"},
     {text = "binding version:", value = xz.version, type = "string"},
@@ -19,12 +24,11 @@ for _, c in ipairs(constants) do
         error(errfmt:format(c.text, c.type, t))
     end
 
-    local msgfmt
     if (t == 'string') then
-        msgfmt = "%22s\t%22s\t(%s)"
+        local msgfmt = "%22s\t%22s\t(%s)"
+        print(msgfmt:format(c.text, c.value, t))
     else
-        msgfmt = "%22s\t%22d\t(%s)"
+        local msgfmt = "%22s\t%s\t(%s)"
+        print(msgfmt:format(c.text, format_integer(c.value, 22), t))
     end
-    
-    print(msgfmt:format(c.text, c.value, t))
 end
