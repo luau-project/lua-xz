@@ -511,27 +511,18 @@ A stream to decompress data from .xz formatted content
 
 * *Description*: Closes the reader stream and free resources
 * *Signature*: ```stream:close()```
-* *Parameters*: 
     * *stream* (```userdata```): An instance of the stream class;
-* *Return* (```void```): Nothing.
+    * *Return* (```void```): Nothing.
 
-##### finish
-
-* *Description*: Finishes the decompression stream
-* *Signature*: ```stream:finish()```
-* *Parameters*: 
-    * *stream* (```userdata```): An instance of the stream class;
-* *Return* (```string```): The last decompressed chunk from content previously fed.
-
-##### update
+##### exec
 
 * *Description*: Feeds data to be decompressed
 * *Signature*: ```stream:exec(producer, consumer [, buffersize ])```
-* *Parameters*: 
     * *stream* (```userdata```): An instance of the stream class;
-    * *data* (```string```): The data to feed the stream;
-    * *buffersize* (```integer | nil```): The size of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file;
-* *Return* (```string```): The decompressed chunk from content previously fed.
+    * *Parameters*: 
+        * *data* (```string```): The data to feed the stream;
+        * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes decompression faster, at a price of higher memory consumption;
+    * *Return* (```void```)
 
 ### stream (writer)
 
@@ -555,27 +546,18 @@ A stream to compress data to .xz format
 
 * *Description*: Closes the writer stream and free resources
 * *Signature*: ```stream:close()```
-* *Parameters*: 
     * *stream* (```userdata```): An instance of the stream class;
-* *Return* (```void```): Nothing.
+    * *Return* (```void```): Nothing.
 
-##### finish
-
-* *Description*: Finishes the compression stream
-* *Signature*: ```stream:finish()```
-* *Parameters*: 
-    * *stream* (```userdata```): An instance of the stream class;
-* *Return* (```string```): The last compressed chunk from content previously fed.
-
-##### update
+##### exec
 
 * *Description*: Feeds data to be compressed
 * *Signature*: ```stream:exec(producer, consumer [, buffersize ])```
-* *Parameters*: 
     * *stream* (```userdata```): An instance of the stream class;
-    * *data* (```string```): The data to feed the stream;
-    * *buffersize* (```integer | nil```): The size of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file;
-* *Return* (```string```): The compressed chunk from content previously fed.
+    * *Parameters*: 
+        * *data* (```string```): The data to feed the stream;
+        * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes compression faster, at a price of higher memory consumption;
+    * *Return* (```void```)
 
 ## Known limitations
 
