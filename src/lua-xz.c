@@ -484,10 +484,10 @@ static int lua_xz_stream_exec(lua_State *L)
                         s->avail_in = produced_data_size;
                         memcpy((void *)input_buffer, (const void *)produced_data, produced_data_size);
                     }
-
-                    /* remove the produced data */
-                    lua_pop(L, 1);
                 }
+
+                /* remove the produced data */
+                lua_pop(L, 1);
             }
             else
             {
@@ -581,12 +581,6 @@ static int lua_xz_stream_close(lua_State *L)
     {
         /* free the lzma_stream */
         lzma_end(&stream->strm);
-
-        /* if input_buffer was allocated, free it */
-        // if (stream->input_buffer != NULL)
-        // {
-        //     lua_xz_aux_free(L, (void *)stream->input_buffer);
-        // }
 
         /* prevent it from being called again */
         stream->is_closed = 1;
