@@ -70,10 +70,10 @@ Once you finished the initial steps in the [Requirements](#requirements) section
     cd ".\xz\"
     ```
 
-3. Set a cmd variable to hold the latest ```liblzma``` version (at the time of writing, it is ```5.8.0```). Then, download the source code with ```curl``` and extract it with ```tar```
+3. Set a cmd variable to hold the latest ```liblzma``` version (at the time of writing, it is ```5.8.1```). Then, download the source code with ```curl``` and extract it with ```tar```
 
     ```cmd
-    SET LIBLZMA_VERSION=5.8.0
+    SET LIBLZMA_VERSION=5.8.1
     curl -L -O "https://github.com/tukaani-project/xz/releases/download/v%LIBLZMA_VERSION%/xz-%LIBLZMA_VERSION%.tar.gz"
     tar -xf "xz-%LIBLZMA_VERSION%.tar.gz"
     ```

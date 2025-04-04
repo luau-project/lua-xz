@@ -297,7 +297,7 @@ jobs:
 
     env:
       LUAROCKS_WINDOWS_DEPS_DIR: C:\external
-      LIBLZMA_WINDOWS_VERSION: 5.8.0
+      LIBLZMA_WINDOWS_VERSION: 5.8.1
 
     steps:
 
