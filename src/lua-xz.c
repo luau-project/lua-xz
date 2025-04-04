@@ -37,8 +37,15 @@
 #if !(defined(LUA_MAXINTEGER) && defined(LUA_MININTEGER))
 #if LUA_VERSION_NUM < 503
 /* On Lua 5.1 and Lua 5.2, lua_Integer is a ptrdiff_t */
+#if !(defined(PTRDIFF_MAX) && defined(PTRDIFF_MIN))
+#include <stdint.h>
+#endif
+#if defined(PTRDIFF_MAX) && defined(PTRDIFF_MIN)
 #define LUA_MAXINTEGER PTRDIFF_MAX
 #define LUA_MININTEGER PTRDIFF_MIN
+#else
+#error "Compiler does not define 'PTRDIFF_MAX' and 'PTRDIFF_MIN'"
+#endif
 #elif LUA_VERSION_NUM == 503
 #if LUA_INT_TYPE == LUA_INT_INT
 #define LUA_MAXINTEGER INT_MAX
