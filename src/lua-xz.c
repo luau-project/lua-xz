@@ -346,6 +346,13 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     return 1;
 }
 
+/*
+** free the aux buffers created
+** during the execution of
+** `lua_xz_stream_exec' below
+*/
+#define lua_xz_stream_exec_free_aux_buffers(L,i) (lua_xz_aux_buffers_resize_input_buffer(L, (i), 0),lua_remove(L, (i)))
+
 /* 
 ** this function follows the pattern
 ** https://github.com/tukaani-project/xz/raw/c3cb1e53a114ac944f559fe7cac45dbf48cca156/doc/examples/01_compress_easy.c
@@ -368,6 +375,7 @@ static int lua_xz_stream_exec(lua_State *L)
     lzma_stream *s;
     size_t produced_data_size = 0;
     const char *produced_data;
+    int produced_data_type;
 
     /* 
     ** input buffer allocated on stack, but
@@ -448,15 +456,17 @@ static int lua_xz_stream_exec(lua_State *L)
             
             if (lua_pcall(L, 0, 1, 0) == 0)
             {
-                if (lua_isnoneornil(L, -1))
+                produced_data_type = lua_type(L, -1);
+
+                if (produced_data_type == LUA_TNIL || produced_data_type == LUA_TNONE)
                 {
                     s->next_in = NULL;
                     s->avail_in = 0;
                     action = LZMA_FINISH;
                 }
-                else
+                else if (produced_data_type == LUA_TSTRING)
                 {
-                    produced_data = luaL_checklstring(L, -1, &produced_data_size);
+                    produced_data = lua_tolstring(L, -1, &produced_data_size);
 
                     if (produced_data_size > sizeof(input_buffer))
                     {
@@ -489,12 +499,20 @@ static int lua_xz_stream_exec(lua_State *L)
                         memcpy((void *)input_buffer, (const void *)produced_data, produced_data_size);
                     }
                 }
+                else
+                {
+                    /* remove the produced data */
+                    lua_pop(L, 1);
+                    lua_xz_stream_exec_free_aux_buffers(L, buffers_index);
+                    return luaL_error(L, "Produced data must be a string or nil (to finish the stream)");
+                }
 
                 /* remove the produced data */
                 lua_pop(L, 1);
             }
             else
             {
+                lua_xz_stream_exec_free_aux_buffers(L, buffers_index);
                 return luaL_error(L, lua_tostring(L, -1));
             }
         }
@@ -521,20 +539,17 @@ static int lua_xz_stream_exec(lua_State *L)
             }
             else
             {
+                lua_xz_stream_exec_free_aux_buffers(L, buffers_index);
                 return luaL_error(L, lua_tostring(L, -1));
             }
         }
 
         if (ret != LZMA_OK)
         {
+            lua_xz_stream_exec_free_aux_buffers(L, buffers_index);
+
             if (ret == LZMA_STREAM_END)
             {
-                /* free the aux buffers */
-                lua_xz_aux_buffers_resize_input_buffer(L, buffers_index, 0);
-
-                /* pop the aux buffers from the stack */
-                lua_remove(L, buffers_index);
-
                 return 0;
             }
 
