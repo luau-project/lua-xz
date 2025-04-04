@@ -361,6 +361,8 @@ static int lua_xz_stream_exec(lua_State *L)
 {
     lua_xz_stream *stream = lua_xz_check_active_stream(L, 1);
 
+    int buffers_index = 0;
+
     lzma_ret ret;
     size_t write_size;
     lzma_stream *s;
@@ -428,6 +430,8 @@ static int lua_xz_stream_exec(lua_State *L)
     /* create the aux buffers */
     b = lua_xz_aux_buffers_new(L, output_buffer_size);
 
+    buffers_index = lua_gettop(L);
+
     s = &stream->strm;
 
     s->next_in = NULL;
@@ -462,7 +466,7 @@ static int lua_xz_stream_exec(lua_State *L)
                         {
                             /* dynamic input buffer is small, grow it and copy data */
 
-                            lua_xz_aux_buffers_resize_input_buffer(L, -2, produced_data_size);
+                            lua_xz_aux_buffers_resize_input_buffer(L, buffers_index, produced_data_size);
                             s->next_in = b->input_buffer;
                             s->avail_in = produced_data_size;
                             memcpy((void *)b->input_buffer, (const void *)produced_data, produced_data_size);
@@ -525,6 +529,12 @@ static int lua_xz_stream_exec(lua_State *L)
         {
             if (ret == LZMA_STREAM_END)
             {
+                /* free the aux buffers */
+                lua_xz_aux_buffers_resize_input_buffer(L, buffers_index, 0);
+
+                /* pop the aux buffers from the stack */
+                lua_remove(L, buffers_index);
+
                 return 0;
             }
 
