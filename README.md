@@ -99,7 +99,7 @@ local compressed_filename = filename .. ".xz"
 -- tip: always check for errors
 local ok, stream = pcall(
     function()
-        local check = xz.check.supported(xz.check.CRC64) or xz.check.CRC32
+        local check = xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
         return xz.stream.writer(xz.PRESET_DEFAULT, check)
     end
 )
@@ -312,7 +312,7 @@ do
     -- tip: always check for errors
     local ok, writer_stream = pcall(
         function()
-            local check = xz.check.supported(xz.check.CRC64) or xz.check.CRC32
+            local check = xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
             return xz.stream.writer(xz.PRESET_DEFAULT, check)
         end
     )
