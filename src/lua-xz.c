@@ -182,6 +182,39 @@ static int lua_xz_newindex(lua_State *L)
 }
 /* end of lua_xz */
 
+/* start of lua_xz_check */
+#define LUA_XZ_CHECK_METATABLE "lua_xz_check_metatable"
+
+static int lua_xz_check_is_supported(lua_State *L)
+{
+    lua_Integer arg_check = luaL_checkinteger(L, 1);
+    lzma_check check = (lzma_check)arg_check;
+    lzma_bool result = lzma_check_is_supported(check);
+    lua_pushboolean(L, result);
+    return 1;
+}
+
+static int lua_xz_check_size(lua_State *L)
+{
+    lua_Integer arg_check = luaL_checkinteger(L, 1);
+    lzma_check check = (lzma_check)arg_check;
+    uint32_t size = lzma_check_size(check);
+    lua_pushboolean(L, size);
+    return 1;
+}
+
+static int lua_xz_check_newindex(lua_State *L)
+{
+    return luaL_error(L, "Read-only object");
+}
+
+static const luaL_Reg lua_xz_check_functions[] = {
+    { "supported", lua_xz_check_is_supported },
+    { "size", lua_xz_check_size },
+    {NULL, NULL}
+};
+/* end of lua_xz_check */
+
 /* start of lua_xz_stream */
 typedef struct taglua_xz_stream {
 
@@ -654,23 +687,52 @@ LUA_XZ_EXPORT int luaopen_xz(lua_State *L)
     lua_pushstring(L, "PRESET_DEFAULT");
     lua_pushinteger(L, LZMA_PRESET_DEFAULT);
     lua_settable(L, -3);
+    /* start of lua_xz constants */
 
-    lua_pushstring(L, "CHECK_NONE");
+    /* start of lua_xz_check */
+    lua_pushstring(L, "check");
+
+    lua_createtable(L, 0, 0);
+    luaL_newmetatable(L, LUA_XZ_CHECK_METATABLE);
+
+#if LUA_VERSION_NUM < 502
+    luaL_register(L, NULL, lua_xz_check_functions);
+#else
+    luaL_setfuncs(L, lua_xz_check_functions, 0);
+#endif
+
+    lua_pushstring(L, "NONE");
     lua_pushinteger(L, LZMA_CHECK_NONE);
     lua_settable(L, -3);
 
-    lua_pushstring(L, "CHECK_CRC32");
+    lua_pushstring(L, "CRC32");
     lua_pushinteger(L, LZMA_CHECK_CRC32);
     lua_settable(L, -3);
 
-    lua_pushstring(L, "CHECK_CRC64");
+    lua_pushstring(L, "CRC64");
     lua_pushinteger(L, LZMA_CHECK_CRC64);
     lua_settable(L, -3);
 
-    lua_pushstring(L, "CHECK_SHA256");
+    lua_pushstring(L, "SHA256");
     lua_pushinteger(L, LZMA_CHECK_SHA256);
     lua_settable(L, -3);
-    /* start of lua_xz constants */
+
+    lua_pushstring(L, "__index");
+    lua_pushvalue(L, -2);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "__metatable");
+    lua_pushboolean(L, 0);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "__newindex");
+    lua_pushcfunction(L, lua_xz_check_newindex);
+    lua_settable(L, -3);
+
+    lua_setmetatable(L, -2); /* setmetatable(lua_xz_check, LUA_XZ_CHECK_METATABLE) */
+
+    lua_settable(L, -3); /* lua_xz.check = lua_xz_check */
+    /* end of lua_xz_check */
 
     /* start of lua_xz_stream */
     lua_pushstring(L, "stream");

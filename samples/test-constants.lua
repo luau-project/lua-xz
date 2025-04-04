@@ -11,10 +11,10 @@ local constants = {
     {text = "MEMLIMIT_UNLIMITED:", value = xz.MEMLIMIT_UNLIMITED, type = "number"},
     {text = "CONCATENATED:", value = xz.CONCATENATED, type = "number"},
     {text = "PRESET_DEFAULT:", value = xz.PRESET_DEFAULT, type = "number"},
-    {text = "CHECK_NONE:", value = xz.CHECK_NONE, type = "number"},
-    {text = "CHECK_CRC32:", value = xz.CHECK_CRC32, type = "number"},
-    {text = "CHECK_CRC64:", value = xz.CHECK_CRC64, type = "number"},
-    {text = "CHECK_SHA256:", value = xz.CHECK_SHA256, type = "number"}
+    {text = "check.NONE:", value = xz.check.NONE, type = "number"},
+    {text = "check.CRC32:", value = xz.check.CRC32, type = "number"},
+    {text = "check.CRC64:", value = xz.check.CRC64, type = "number"},
+    {text = "check.SHA256:", value = xz.check.SHA256, type = "number"}
 }
 
 for _, c in ipairs(constants) do

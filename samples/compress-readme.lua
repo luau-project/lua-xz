@@ -23,12 +23,12 @@ local compressed_filename = filename .. ".xz"
 --      * a string "0e", ..., "9e" (preset level + extreme modifier)
 --  2) if the .xz file needs to be
 --  decompressed with XZ Embedded, use
---  xz.CHECK_CRC32 instead.
+--  xz.check.CRC32 instead.
 -- 
 -- tip: always check for errors
 local ok, stream = pcall(
     function()
-        return xz.stream.writer(xz.PRESET_DEFAULT, xz.CHECK_CRC64)
+        return xz.stream.writer(xz.PRESET_DEFAULT, xz.check.CRC64)
     end
 )
 

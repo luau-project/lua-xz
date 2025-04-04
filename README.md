@@ -93,12 +93,12 @@ local compressed_filename = filename .. ".xz"
 --      * a string "0e", ..., "9e" (preset level + extreme modifier)
 --  2) if the .xz file needs to be
 --  decompressed with XZ Embedded, use
---  xz.CHECK_CRC32 instead.
+--  xz.check.CRC32 instead.
 -- 
 -- tip: always check for errors
 local ok, stream = pcall(
     function()
-        return xz.stream.writer(xz.PRESET_DEFAULT, xz.CHECK_CRC64)
+        return xz.stream.writer(xz.PRESET_DEFAULT, xz.check.CRC64)
     end
 )
 
@@ -310,7 +310,7 @@ do
     -- tip: always check for errors
     local ok, writer_stream = pcall(
         function()
-            return xz.stream.writer(xz.PRESET_DEFAULT, xz.CHECK_CRC64)
+            return xz.stream.writer(xz.PRESET_DEFAULT, xz.check.CRC64)
         end
     )
 
@@ -464,10 +464,10 @@ assert(
 | MEMLIMIT_UNLIMITED | integer | A custom value in Lua to disable a memory limit |
 | CONCATENATED | integer | Flag to enable decoding of concatenated files |
 | PRESET_DEFAULT | integer | Default compression preset |
-| CHECK_NONE | integer | No integrity check is calculated |
-| CHECK_CRC32 | integer | Calculate CRC32 integrity check using the polynomial from the IEEE 802.3 standard |
-| CHECK_CRC64 | integer | Calculate CRC64 integrity check using the polynomial from the ECMA-182 standard |
-| CHECK_SHA256 | integer | SHA256 integrity check |
+| check.NONE | integer | No integrity check is calculated |
+| check.CRC32 | integer | Calculate CRC32 integrity check using the polynomial from the IEEE 802.3 standard |
+| check.CRC64 | integer | Calculate CRC64 integrity check using the polynomial from the ECMA-182 standard |
+| check.SHA256 | integer | SHA256 integrity check |
 
 > [!NOTE]
 > 
@@ -499,11 +499,10 @@ A stream to decompress data from .xz formatted content
 ##### reader
 
 * *Description*: Creates a reader stream to decompress data from .xz formatted content
-* *Signature*: ```xz.stream.reader(memlimit, flags [, buffersize ])```
+* *Signature*: ```xz.stream.reader(memlimit, flags)```
 * *Parameters*: 
     * *memlimit* (```integer```): Memory usage limit as bytes. Use ```xz.MEMLIMIT_UNLIMITED``` to effectively disable the limiter;
     * *flags* (```integer```): Bitwise-or of zero or more of the decoder flags (for now, only ```xz.CONCATENATED``` is provided as constant);
-    * *buffersize* (```integer | nil```): The size of the output buffer to allocate memory at stream creation. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file;
 * *Return* (```userdata```): An instance of the stream reader class.
 
 #### Instance methods
@@ -527,10 +526,11 @@ A stream to decompress data from .xz formatted content
 ##### update
 
 * *Description*: Feeds data to be decompressed
-* *Signature*: ```stream:update(data)```
+* *Signature*: ```stream:exec(producer, consumer [, buffersize ])```
 * *Parameters*: 
     * *stream* (```userdata```): An instance of the stream class;
     * *data* (```string```): The data to feed the stream;
+    * *buffersize* (```integer | nil```): The size of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file;
 * *Return* (```string```): The decompressed chunk from content previously fed.
 
 ### stream (writer)
@@ -570,10 +570,11 @@ A stream to compress data to .xz format
 ##### update
 
 * *Description*: Feeds data to be compressed
-* *Signature*: ```stream:update(data)```
+* *Signature*: ```stream:exec(producer, consumer [, buffersize ])```
 * *Parameters*: 
     * *stream* (```userdata```): An instance of the stream class;
     * *data* (```string```): The data to feed the stream;
+    * *buffersize* (```integer | nil```): The size of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file;
 * *Return* (```string```): The compressed chunk from content previously fed.
 
 ## Known limitations
