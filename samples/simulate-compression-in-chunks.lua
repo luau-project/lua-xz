@@ -16,7 +16,8 @@ do
     -- tip: always check for errors
     local ok, writer_stream = pcall(
         function()
-            return xz.stream.writer(xz.PRESET_DEFAULT, xz.check.CRC64)
+            local check = xz.check.support(xz.check.CRC64) or xz.check.CRC32
+            return xz.stream.writer(xz.PRESET_DEFAULT, check)
         end
     )
 
