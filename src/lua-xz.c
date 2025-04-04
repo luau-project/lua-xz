@@ -484,7 +484,7 @@ static int lua_xz_stream_exec(lua_State *L)
                     {
                         /* input buffer on stack is enough, copy data to it */
 
-                        s->next_in = (uint8_t *)produced_data;
+                        s->next_in = (uint8_t *)input_buffer;
                         s->avail_in = produced_data_size;
                         memcpy((void *)input_buffer, (const void *)produced_data, produced_data_size);
                     }
