@@ -49,11 +49,8 @@ local function producer()
 
     -- define the number of bytes
     -- to be read from the input file
-    -- in a single chunk.
-    -- In a real world scenario,
-    -- 8kb (8 * 1024) would be
-    -- a reasonable value
-    local chunk_size = 64
+    -- in a single chunk (8 kb).
+    local chunk_size = 8 * 1024
 
     -- read the chunk from file
     local chunk = input:read(chunk_size)
