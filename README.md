@@ -18,9 +18,14 @@
 
 * [Installation](#installation)
 * [Usage](#usage)
-    * [Compress a file](#compress-a-file)
-    * [Decompress a file](#decompress-a-file)
-    * [Simulate compression in chunks](#simulate-compression-in-chunks)
+    * [lzma]
+        * [Compress a file to .lzma format](#compress-a-file-to-lzma-format)
+        * [Decompress a file from .lzma format](#decompress-a-file-from-lzma-format)
+        * [Simulate compression in chunks to .lzma format](#simulate-compression-in-chunks-to-lzma-format)
+    * [xz]
+        * [Compress a file to .xz format](#compress-a-file-to-xz-format)
+        * [Decompress a file from .xz format](#decompress-a-file-from-xz-format)
+        * [Simulate compression in chunks to .xz format](#simulate-compression-in-chunks-to-xz-format)
 * [Constants](#constants)
 * [Classes](#classes)
     * [stream (lzmareader)](#stream-lzmareader)
@@ -59,13 +64,403 @@ luarocks install lua-xz
 
 ## Usage
 
-Through the streaming interface, three examples are shown:
+Through the streaming interface, three examples are shown for both .lzma and .xz formats:
 
 * Compress a file
 * Decompress a file
 * Simulate compression in chunks
 
-### Compress a file to .xz format
+### lzma
+
+Usage to compress and decompress .lzma files
+
+#### Compress a file to .lzma format
+
+For this example, we compress the ```README.md``` file of this project, which might even become larger than the original due its small size. In the end of the script execution, a file named  ```README.md.lzma``` is written to disk.
+
+```lua
+-- load the library
+local xz = require("lua-xz")
+
+-- the file to compress
+local filename = "README.md"
+
+-- compressed file name
+local compressed_filename = filename .. ".lzma"
+
+-- create a lzma writer stream
+-- 
+-- first parameter:
+--  preset:
+--    the compression preset
+-- 
+-- note:
+--  preset can be:
+--    * an integer [0, 9]
+--    * a string "0", ..., "9"
+--    * a string "0e", ..., "9e" (preset level + extreme modifier)
+-- 
+-- tip: always check for errors
+local ok, stream = pcall(
+    function()
+        return xz.stream.lzmawriter(xz.PRESET_DEFAULT)
+    end
+)
+
+-- an error occurred ?
+if (not ok) then
+    -- raise the error
+    error(stream)
+end
+
+-- open the input file to feed
+-- its content to the compression stream
+local input = assert(
+    io.open(filename, "rb"),
+    "failed to open " .. filename .. " file for reading"
+)
+
+-- open / create the output file to hold
+-- the compressed data
+local output = assert(
+    io.open(compressed_filename, "wb"),
+    "failed to open  " .. compressed_filename .. " file for writing"
+)
+
+-- define a producer function
+-- to feed uncompressed data
+-- to be encoded by the lzma writer stream
+local function producer()
+
+    -- define the number of bytes
+    -- to be read from the input file
+    -- in a single chunk.
+    -- In a real world scenario,
+    -- 8kb (8 * 1024) would be
+    -- a reasonable value
+    local chunk_size = 64
+
+    -- read the chunk from file
+    local chunk = input:read(chunk_size)
+
+    -- return the chunk read
+    return chunk
+end
+
+-- define a consumer function
+-- to handle compressed chunks
+-- emitted by the lzma writer stream
+local function consumer(compressed_chunk)
+    output:write(compressed_chunk)
+end
+
+do
+    -- execute the stream
+    -- 
+    -- tip: always check for errors
+    local ok, exec_err = pcall(
+        function()
+            stream:exec(producer, consumer)
+        end
+    )
+
+    -- an error occurred ?
+    if (not ok) then
+        -- raise the error
+        error(exec_err)
+    end
+end
+
+-- close the lzma writer stream to free resources
+-- 
+-- tip: it is automatically freed on garbage collection
+stream:close()
+
+-- close the output file
+output:close()
+
+-- close the input file
+input:close()
+```
+
+#### Decompress a file from .lzma format
+
+For this example, we decompress the ```README.md.lzma``` file created by [Compress a file to .lzma format](#compress-a-file-to-lzma-format) above, and we output a file named ```lzma-copy-of-README.md```, which should be a perfect copy of this ```README.md``` file.
+
+```lua
+-- load the library
+local xz = require("lua-xz")
+
+-- the file to decompress
+local filename = "README.md.lzma"
+
+-- the decompressed file name
+local decompressed_filename = "lzma-copy-of-" .. (filename:gsub("%.lzma$", ""))
+
+-- create a lzma reader stream
+-- 
+-- first parameter:
+--  a memory limit in bytes
+--  can be chosen
+-- 
+-- note: xz.MEMLIMIT_UNLIMITED does not use a limit
+-- 
+-- tip: always check for errors
+local ok, stream = pcall(
+    function()
+        return xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
+    end
+)
+
+-- an error occurred ?
+if (not ok) then
+    -- raise the error
+    error(stream)
+end
+
+-- open the input file to feed
+-- its content to the decompression stream
+local input = assert(
+    io.open(filename, "rb"),
+    "failed to open " .. filename .. " file for reading"
+)
+
+-- open / create the output file to hold
+-- the decompressed data
+local output = assert(
+    io.open(decompressed_filename, "wb"),
+    "failed to open " .. decompressed_filename .. " file for writing"
+)
+
+-- define a producer function
+-- to feed compressed data
+-- to be decoded by the lzma reader stream
+local function producer()
+
+    -- define the number of bytes
+    -- to be read from the input file
+    -- in a single chunk.
+    -- In a real world scenario,
+    -- 8kb (8 * 1024) would be
+    -- a reasonable value
+    local chunk_size = 64
+
+    -- read the chunk from file
+    local chunk = input:read(chunk_size)
+
+    -- return the chunk read
+    return chunk
+end
+
+-- define a consumer function
+-- to handle decompressed chunks
+-- emitted by the lzma reader stream
+local function consumer(decompressed_chunk)
+    output:write(decompressed_chunk)
+end
+
+do
+    -- execute the stream
+    -- 
+    -- tip: always check for errors
+    local ok, exec_err = pcall(
+        function()
+            stream:exec(producer, consumer)
+        end
+    )
+
+    -- an error occurred ?
+    if (not ok) then
+        -- raise the error
+        error(exec_err)
+    end
+end
+
+-- close the lzma reader stream to free resources
+-- 
+-- tip: it is automatically freed on garbage collection
+stream:close()
+
+-- close the output file
+output:close()
+
+-- close the input file
+input:close()
+```
+
+#### Simulate compression in chunks to .lzma format
+
+As a last example, we simulate compression in chunks to .lzma format. The idea is that data can come in chunks from HTTPS requests, and we feed a writer stream to compress the data coming from the internet to disk. In the end, decompression is performed on the saved file on disk, and the inputs are matched against the decompressed output.
+
+```lua
+local xz = require("lua-xz")
+
+-- simulate content to be streamed to the encoder
+local inputs = {"hello", " ", "world"}
+
+-- a table to hold the output
+-- after a compression-decompression
+-- to be matched against the initial
+-- `inputs' table above
+local outputs = {}
+
+--[[ start of encoding ]]
+do
+    -- create a lzma writer stream
+    -- 
+    -- tip: always check for errors
+    local ok, writer_stream = pcall(
+        function()
+            return xz.stream.lzmawriter(xz.PRESET_DEFAULT)
+        end
+    )
+
+    -- an error occurred ?
+    if (not ok) then
+        -- raise the error
+        error(writer_stream)
+    end
+
+    -- open / create a destination file to hold the compressed content
+    local output_file = assert(
+        io.open("lua-xz.lzma", "wb"),
+        "failed to open the file lua-xz.lzma for writing"
+    )
+
+    -- define a producer function
+    -- to feed uncompressed data
+    -- to be encoded by the lzma writer stream
+    local inputs_start = 1
+    local function producer()
+        local element
+        if (inputs_start <= #inputs) then
+            element = inputs[inputs_start]
+            inputs_start = inputs_start + 1
+        end
+        return element
+    end
+
+    -- define a consumer function
+    -- to handle compressed chunks
+    -- emitted by the lzma writer stream
+    local function consumer(compressed_chunk)
+        output_file:write(compressed_chunk)
+    end
+
+    do
+        -- execute the stream
+        -- 
+        -- tip: always check for errors
+        local ok, exec_err = pcall(
+            function()
+                writer_stream:exec(producer, consumer)
+            end
+        )
+
+        -- an error occurred ?
+        if (not ok) then
+            -- raise the error
+            error(exec_err)
+        end
+    end
+
+    -- close the lzma writer stream to free resources
+    -- 
+    -- tip: it is automatically freed on garbage collection
+    writer_stream:close()
+
+    -- close the output file
+    output_file:close()
+end
+--[[ end of encoding]]
+
+--[[ start of decoding ]]
+do
+    -- create a lzma reader stream
+    -- 
+    -- tip: always check for errors
+    local ok, reader_stream = pcall(
+        function()
+            return xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
+        end
+    )
+
+    -- open the file created above
+    -- to feed the lzma reader stream
+    -- with content to decode
+    local input_file = assert(
+        io.open("lua-xz.lzma", "rb"),
+        "failed to open the file lua-xz.lzma for reading"
+    )
+
+    -- define a producer function
+    -- to feed compressed data
+    -- to be decoded by the lzma reader stream
+    local function producer()
+
+        -- define the number of bytes
+        -- to be read from the input file
+        -- in a single chunk.
+        -- In a real world scenario,
+        -- 8kb (8 * 1024) would be
+        -- a reasonable value
+        local chunk_size = 64
+
+        -- read the chunk from file
+        local chunk = input_file:read(chunk_size)
+
+        -- return the chunk read
+        return chunk
+    end
+
+    -- define a consumer function
+    -- to handle decompressed chunks
+    -- emitted by the lzma reader stream
+    local function consumer(decompressed_chunk)
+        table.insert(outputs, decompressed_chunk)
+    end
+
+    do
+        -- execute the stream
+        -- 
+        -- tip: always check for errors
+        local ok, exec_err = pcall(
+            function()
+                reader_stream:exec(producer, consumer)
+            end
+        )
+    
+        -- an error occurred ?
+        if (not ok) then
+            -- raise the error
+            error(exec_err)
+        end
+    end
+
+    -- close the lzma reader stream to free resources
+    -- 
+    -- tip: it is automatically freed on garbage collection
+    reader_stream:close()
+
+    -- close the file
+    input_file:close()
+end
+--[[ end of decoding]]
+
+-- make sure that the decoded data
+-- after compression-decompression
+-- matches the initial inputs
+assert(
+    table.concat(inputs) == table.concat(outputs),
+    "compression-decompression mismatch: the final output did not match the initial input"
+)
+```
+
+### xz
+
+Usage to compress and decompress .xz files
+
+#### Compress a file to .xz format
 
 For this example, we compress the ```README.md``` file of this project, which might even become larger than the original due its small size. In the end of the script execution, a file named  ```README.md.xz``` is written to disk.
 
@@ -79,7 +474,7 @@ local filename = "README.md"
 -- compressed file name
 local compressed_filename = filename .. ".xz"
 
--- create a writer stream
+-- create a xz writer stream
 -- 
 -- first parameter:
 --  preset:
@@ -128,7 +523,7 @@ local output = assert(
 
 -- define a producer function
 -- to feed uncompressed data
--- to be encoded by the writer stream
+-- to be encoded by the xz writer stream
 local function producer()
 
     -- define the number of bytes
@@ -148,7 +543,7 @@ end
 
 -- define a consumer function
 -- to handle compressed chunks
--- emitted by the writer stream
+-- emitted by the xz writer stream
 local function consumer(compressed_chunk)
     output:write(compressed_chunk)
 end
@@ -170,7 +565,7 @@ do
     end
 end
 
--- close the writer stream to free resources
+-- close the xz writer stream to free resources
 -- 
 -- tip: it is automatically freed on garbage collection
 stream:close()
@@ -182,9 +577,9 @@ output:close()
 input:close()
 ```
 
-### Decompress a file from .xz format
+#### Decompress a file from .xz format
 
-For this example, we decompress the ```README.md.xz``` file created by [Compress a file](#compress-a-file) above, and we output a file named ```xz-copy-of-README.md```, which should be a perfect copy of this ```README.md``` file.
+For this example, we decompress the ```README.md.xz``` file created by [Compress a file to .xz format](#compress-a-file-to-xz-format) above, and we output a file named ```xz-copy-of-README.md```, which should be a perfect copy of this ```README.md``` file.
 
 ```lua
 -- load the library
@@ -196,7 +591,7 @@ local filename = "README.md.xz"
 -- the decompressed file name
 local decompressed_filename = "xz-copy-of-" .. (filename:gsub("%.xz$", ""))
 
--- create a reader stream
+-- create a xz reader stream
 -- 
 -- first parameter:
 --  a memory limit in bytes
@@ -237,7 +632,7 @@ local output = assert(
 
 -- define a producer function
 -- to feed compressed data
--- to be decoded by the reader stream
+-- to be decoded by the xz reader stream
 local function producer()
 
     -- define the number of bytes
@@ -257,7 +652,7 @@ end
 
 -- define a consumer function
 -- to handle decompressed chunks
--- emitted by the reader stream
+-- emitted by the xz reader stream
 local function consumer(decompressed_chunk)
     output:write(decompressed_chunk)
 end
@@ -279,7 +674,7 @@ do
     end
 end
 
--- close the reader stream to free resources
+-- close the xz reader stream to free resources
 -- 
 -- tip: it is automatically freed on garbage collection
 stream:close()
@@ -291,7 +686,7 @@ output:close()
 input:close()
 ```
 
-### Simulate compression in chunks to .xz format
+#### Simulate compression in chunks to .xz format
 
 As a last example, we simulate compression in chunks to .xz format. The idea is that data can come in chunks from HTTPS requests, and we feed a writer stream to compress the data coming from the internet to disk. In the end, decompression is performed on the saved file on disk, and the inputs are matched against the decompressed output.
 
@@ -309,7 +704,7 @@ local outputs = {}
 
 --[[ start of encoding ]]
 do
-    -- create a writer stream
+    -- create a xz writer stream
     -- 
     -- tip: always check for errors
     local ok, writer_stream = pcall(
@@ -333,7 +728,7 @@ do
 
     -- define a producer function
     -- to feed uncompressed data
-    -- to be encoded by the writer stream
+    -- to be encoded by the xz writer stream
     local inputs_start = 1
     local function producer()
         local element
@@ -346,7 +741,7 @@ do
 
     -- define a consumer function
     -- to handle compressed chunks
-    -- emitted by the writer stream
+    -- emitted by the xz writer stream
     local function consumer(compressed_chunk)
         output_file:write(compressed_chunk)
     end
@@ -368,7 +763,7 @@ do
         end
     end
 
-    -- close the writer stream to free resources
+    -- close the xz writer stream to free resources
     -- 
     -- tip: it is automatically freed on garbage collection
     writer_stream:close()
@@ -380,7 +775,7 @@ end
 
 --[[ start of decoding ]]
 do
-    -- create a reader stream
+    -- create a xz reader stream
     -- 
     -- tip: always check for errors
     local ok, reader_stream = pcall(
@@ -390,7 +785,7 @@ do
     )
 
     -- open the file created above
-    -- to feed the reader stream
+    -- to feed the xz reader stream
     -- with content to decode
     local input_file = assert(
         io.open("lua-xz.xz", "rb"),
@@ -399,7 +794,7 @@ do
 
     -- define a producer function
     -- to feed compressed data
-    -- to be decoded by the reader stream
+    -- to be decoded by the xz reader stream
     local function producer()
 
         -- define the number of bytes
@@ -419,7 +814,7 @@ do
 
     -- define a consumer function
     -- to handle decompressed chunks
-    -- emitted by the reader stream
+    -- emitted by the xz reader stream
     local function consumer(decompressed_chunk)
         table.insert(outputs, decompressed_chunk)
     end
@@ -441,7 +836,7 @@ do
         end
     end
 
-    -- close the reader stream to free resources
+    -- close the xz reader stream to free resources
     -- 
     -- tip: it is automatically freed on garbage collection
     reader_stream:close()

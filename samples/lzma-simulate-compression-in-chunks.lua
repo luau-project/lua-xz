@@ -11,13 +11,12 @@ local outputs = {}
 
 --[[ start of encoding ]]
 do
-    -- create a xz writer stream
+    -- create a lzma writer stream
     -- 
     -- tip: always check for errors
     local ok, writer_stream = pcall(
         function()
-            local check = xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
-            return xz.stream.xzwriter(xz.PRESET_DEFAULT, check)
+            return xz.stream.lzmawriter(xz.PRESET_DEFAULT)
         end
     )
 
@@ -29,13 +28,13 @@ do
 
     -- open / create a destination file to hold the compressed content
     local output_file = assert(
-        io.open("lua-xz.xz", "wb"),
-        "failed to open the file lua-xz.xz for writing"
+        io.open("lua-xz.lzma", "wb"),
+        "failed to open the file lua-xz.lzma for writing"
     )
 
     -- define a producer function
     -- to feed uncompressed data
-    -- to be encoded by the xz writer stream
+    -- to be encoded by the lzma writer stream
     local inputs_start = 1
     local function producer()
         local element
@@ -48,7 +47,7 @@ do
 
     -- define a consumer function
     -- to handle compressed chunks
-    -- emitted by the xz writer stream
+    -- emitted by the lzma writer stream
     local function consumer(compressed_chunk)
         output_file:write(compressed_chunk)
     end
@@ -70,7 +69,7 @@ do
         end
     end
 
-    -- close the xz writer stream to free resources
+    -- close the lzma writer stream to free resources
     -- 
     -- tip: it is automatically freed on garbage collection
     writer_stream:close()
@@ -82,26 +81,26 @@ end
 
 --[[ start of decoding ]]
 do
-    -- create a xz reader stream
+    -- create a lzma reader stream
     -- 
     -- tip: always check for errors
     local ok, reader_stream = pcall(
         function()
-            return xz.stream.xzreader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
+            return xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
         end
     )
 
     -- open the file created above
-    -- to feed the xz reader stream
+    -- to feed the lzma reader stream
     -- with content to decode
     local input_file = assert(
-        io.open("lua-xz.xz", "rb"),
-        "failed to open the file lua-xz.xz for reading"
+        io.open("lua-xz.lzma", "rb"),
+        "failed to open the file lua-xz.lzma for reading"
     )
 
     -- define a producer function
     -- to feed compressed data
-    -- to be decoded by the xz reader stream
+    -- to be decoded by the lzma reader stream
     local function producer()
 
         -- define the number of bytes
@@ -121,7 +120,7 @@ do
 
     -- define a consumer function
     -- to handle decompressed chunks
-    -- emitted by the xz reader stream
+    -- emitted by the lzma reader stream
     local function consumer(decompressed_chunk)
         table.insert(outputs, decompressed_chunk)
     end
@@ -143,7 +142,7 @@ do
         end
     end
 
-    -- close the xz reader stream to free resources
+    -- close the lzma reader stream to free resources
     -- 
     -- tip: it is automatically freed on garbage collection
     reader_stream:close()

@@ -1,36 +1,24 @@
 -- load the library
 local xz = require("lua-xz")
 
--- the file to compress
-local filename = "README.md"
+-- the file to decompress
+local filename = "README.md.lzma"
 
--- compressed file name
-local compressed_filename = filename .. ".xz"
+-- the decompressed file name
+local decompressed_filename = "lzma-copy-of-" .. (filename:gsub("%.lzma$", ""))
 
--- create a xz writer stream
+-- create a lzma reader stream
 -- 
 -- first parameter:
---  preset:
---    the compression preset
--- second parameter:
---  check:
---    the integrity check
+--  a memory limit in bytes
+--  can be chosen
 -- 
--- note:
---  1) preset can be:
---      * an integer [0, 9]
---      * a string "0", ..., "9"
---      * a string "0e", ..., "9e" (preset level + extreme modifier)
---  2) check:
---      if the .xz file needs to be
---      decompressed with XZ Embedded, use
---      xz.check.CRC32 instead.
+-- note: xz.MEMLIMIT_UNLIMITED does not use a limit
 -- 
 -- tip: always check for errors
 local ok, stream = pcall(
     function()
-        local check = xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
-        return xz.stream.xzwriter(xz.PRESET_DEFAULT, check)
+        return xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
     end
 )
 
@@ -41,22 +29,22 @@ if (not ok) then
 end
 
 -- open the input file to feed
--- its content to the compression stream
+-- its content to the decompression stream
 local input = assert(
     io.open(filename, "rb"),
     "failed to open " .. filename .. " file for reading"
 )
 
 -- open / create the output file to hold
--- the compressed data
+-- the decompressed data
 local output = assert(
-    io.open(compressed_filename, "wb"),
-    "failed to open  " .. compressed_filename .. " file for writing"
+    io.open(decompressed_filename, "wb"),
+    "failed to open " .. decompressed_filename .. " file for writing"
 )
 
 -- define a producer function
--- to feed uncompressed data
--- to be encoded by the xz writer stream
+-- to feed compressed data
+-- to be decoded by the lzma reader stream
 local function producer()
 
     -- define the number of bytes
@@ -75,10 +63,10 @@ local function producer()
 end
 
 -- define a consumer function
--- to handle compressed chunks
--- emitted by the xz writer stream
-local function consumer(compressed_chunk)
-    output:write(compressed_chunk)
+-- to handle decompressed chunks
+-- emitted by the lzma reader stream
+local function consumer(decompressed_chunk)
+    output:write(decompressed_chunk)
 end
 
 do
@@ -98,7 +86,7 @@ do
     end
 end
 
--- close the xz writer stream to free resources
+-- close the lzma reader stream to free resources
 -- 
 -- tip: it is automatically freed on garbage collection
 stream:close()

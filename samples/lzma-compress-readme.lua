@@ -5,32 +5,24 @@ local xz = require("lua-xz")
 local filename = "README.md"
 
 -- compressed file name
-local compressed_filename = filename .. ".xz"
+local compressed_filename = filename .. ".lzma"
 
--- create a xz writer stream
+-- create a lzma writer stream
 -- 
 -- first parameter:
 --  preset:
 --    the compression preset
--- second parameter:
---  check:
---    the integrity check
 -- 
 -- note:
---  1) preset can be:
---      * an integer [0, 9]
---      * a string "0", ..., "9"
---      * a string "0e", ..., "9e" (preset level + extreme modifier)
---  2) check:
---      if the .xz file needs to be
---      decompressed with XZ Embedded, use
---      xz.check.CRC32 instead.
+--  preset can be:
+--    * an integer [0, 9]
+--    * a string "0", ..., "9"
+--    * a string "0e", ..., "9e" (preset level + extreme modifier)
 -- 
 -- tip: always check for errors
 local ok, stream = pcall(
     function()
-        local check = xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
-        return xz.stream.xzwriter(xz.PRESET_DEFAULT, check)
+        return xz.stream.lzmawriter(xz.PRESET_DEFAULT)
     end
 )
 
@@ -56,7 +48,7 @@ local output = assert(
 
 -- define a producer function
 -- to feed uncompressed data
--- to be encoded by the xz writer stream
+-- to be encoded by the lzma writer stream
 local function producer()
 
     -- define the number of bytes
@@ -76,7 +68,7 @@ end
 
 -- define a consumer function
 -- to handle compressed chunks
--- emitted by the xz writer stream
+-- emitted by the lzma writer stream
 local function consumer(compressed_chunk)
     output:write(compressed_chunk)
 end
@@ -98,7 +90,7 @@ do
     end
 end
 
--- close the xz writer stream to free resources
+-- close the lzma writer stream to free resources
 -- 
 -- tip: it is automatically freed on garbage collection
 stream:close()

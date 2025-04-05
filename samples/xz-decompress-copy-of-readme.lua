@@ -7,7 +7,7 @@ local filename = "README.md.xz"
 -- the decompressed file name
 local decompressed_filename = "xz-copy-of-" .. (filename:gsub("%.xz$", ""))
 
--- create a reader stream
+-- create a xz reader stream
 -- 
 -- first parameter:
 --  a memory limit in bytes
@@ -48,7 +48,7 @@ local output = assert(
 
 -- define a producer function
 -- to feed compressed data
--- to be decoded by the reader stream
+-- to be decoded by the xz reader stream
 local function producer()
 
     -- define the number of bytes
@@ -68,7 +68,7 @@ end
 
 -- define a consumer function
 -- to handle decompressed chunks
--- emitted by the reader stream
+-- emitted by the xz reader stream
 local function consumer(decompressed_chunk)
     output:write(decompressed_chunk)
 end
@@ -90,7 +90,7 @@ do
     end
 end
 
--- close the reader stream to free resources
+-- close the xz reader stream to free resources
 -- 
 -- tip: it is automatically freed on garbage collection
 stream:close()
