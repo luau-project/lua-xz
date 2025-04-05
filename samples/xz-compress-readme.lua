@@ -1,28 +1,36 @@
 -- load the library
 local xz = require("lua-xz")
 
--- the file to decompress
-local filename = "README.md.xz"
+-- the file to compress
+local filename = "README.md"
 
--- the decompressed file name
-local decompressed_filename = "copy-of-" .. (filename:gsub("%.xz$", ""))
+-- compressed file name
+local compressed_filename = filename .. ".xz"
 
--- create a reader stream
+-- create a writer stream
 -- 
 -- first parameter:
---  a memory limit in bytes
---  can be chosen
+--  preset:
+--    the compression preset
 -- second parameter:
---  decoding flags
+--  check:
+--    the integrity check
 -- 
--- note: 1) xz.MEMLIMIT_UNLIMITED does not use a limit
---       2) xz.CONCATENATED decodes all the streams,
---       not only the first stream.
+-- note:
+--  1) preset can be:
+--      * an integer [0, 9]
+--      * a string "0", ..., "9"
+--      * a string "0e", ..., "9e" (preset level + extreme modifier)
+--  2) check:
+--      if the .xz file needs to be
+--      decompressed with XZ Embedded, use
+--      xz.check.CRC32 instead.
 -- 
 -- tip: always check for errors
 local ok, stream = pcall(
     function()
-        return xz.stream.reader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
+        local check = xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
+        return xz.stream.xzwriter(xz.PRESET_DEFAULT, check)
     end
 )
 
@@ -33,22 +41,22 @@ if (not ok) then
 end
 
 -- open the input file to feed
--- its content to the decompression stream
+-- its content to the compression stream
 local input = assert(
     io.open(filename, "rb"),
     "failed to open " .. filename .. " file for reading"
 )
 
 -- open / create the output file to hold
--- the decompressed data
+-- the compressed data
 local output = assert(
-    io.open(decompressed_filename, "wb"),
-    "failed to open " .. decompressed_filename .. " file for writing"
+    io.open(compressed_filename, "wb"),
+    "failed to open  " .. compressed_filename .. " file for writing"
 )
 
 -- define a producer function
--- to feed compressed data
--- to be decoded by the reader stream
+-- to feed uncompressed data
+-- to be encoded by the writer stream
 local function producer()
 
     -- define the number of bytes
@@ -67,10 +75,10 @@ local function producer()
 end
 
 -- define a consumer function
--- to handle decompressed chunks
--- emitted by the reader stream
-local function consumer(decompressed_chunk)
-    output:write(decompressed_chunk)
+-- to handle compressed chunks
+-- emitted by the writer stream
+local function consumer(compressed_chunk)
+    output:write(compressed_chunk)
 end
 
 do
@@ -90,7 +98,7 @@ do
     end
 end
 
--- close the reader stream to free resources
+-- close the writer stream to free resources
 -- 
 -- tip: it is automatically freed on garbage collection
 stream:close()

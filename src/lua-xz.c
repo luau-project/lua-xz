@@ -220,8 +220,12 @@ typedef struct taglua_xz_stream {
 
     lzma_stream strm;
     int is_writer;
+    int is_xz;
     int executed;
     int is_closed;
+
+    /* options to lzma encoder */
+    lzma_options_lzma opt_lzma;
 
 } lua_xz_stream;
 
@@ -242,7 +246,7 @@ static lua_xz_stream *lua_xz_check_active_stream(lua_State *L, int index)
     return stream;
 }
 
-static int lua_xz_stream_new(lua_State *L, int is_writer)
+static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
 {
     /* writer variables and args */
     lua_Integer arg_preset;
@@ -309,28 +313,55 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
             return luaL_error(L, "Invalid preset type");
         }
 
-        arg_check = luaL_checkinteger(L, 2);
-        check = (lzma_check)arg_check;
-
-        ret = lzma_easy_encoder(
-            &stream->strm,
-            preset,
-            check);
-
-        if (ret != LZMA_OK)
+        if (is_xz)
         {
-            switch (ret)
+            arg_check = luaL_checkinteger(L, 2);
+            check = (lzma_check)arg_check;
+    
+            ret = lzma_easy_encoder(
+                &stream->strm,
+                preset,
+                check);
+
+            if (ret != LZMA_OK)
             {
-            case LZMA_MEM_ERROR:
-                return luaL_error(L, "Memory allocation failed");
-            case LZMA_OPTIONS_ERROR:
-                return luaL_error(L, "The given compression preset is not supported by this build of liblzma");
-            case LZMA_UNSUPPORTED_CHECK:
-                return luaL_error(L, "The given check type is not supported by this build of liblzma");
-            case LZMA_PROG_ERROR:
-                return luaL_error(L, "One or more of the parameters have values that will never be valid");
-            default:
-                return luaL_error(L, "Failed to create lzma_easy_encoder");
+                switch (ret)
+                {
+                case LZMA_MEM_ERROR:
+                    return luaL_error(L, "Memory allocation failed");
+                case LZMA_OPTIONS_ERROR:
+                    return luaL_error(L, "The given compression preset is not supported by this build of liblzma");
+                case LZMA_UNSUPPORTED_CHECK:
+                    return luaL_error(L, "The given check type is not supported by this build of liblzma");
+                case LZMA_PROG_ERROR:
+                    return luaL_error(L, "One or more of the parameters have values that will never be valid");
+                default:
+                    return luaL_error(L, "Failed to create lzma_easy_encoder");
+                }
+            }
+        }
+        else
+        {
+            if (lzma_lzma_preset(&stream->opt_lzma, preset))
+            {
+                return luaL_error(L, "Unsupported preset");
+            }
+
+            ret = lzma_alone_encoder(&stream->strm, (const lzma_options_lzma *)&stream->opt_lzma);
+
+            if (ret != LZMA_OK)
+            {
+                switch (ret)
+                {
+                case LZMA_MEM_ERROR:
+                    return luaL_error(L, "Memory allocation failed");
+                case LZMA_OPTIONS_ERROR:
+                    return luaL_error(L, "The given compression preset is not supported by this build of liblzma");
+                case LZMA_PROG_ERROR:
+                    return luaL_error(L, "One or more of the parameters have values that will never be valid");
+                default:
+                    return luaL_error(L, "Failed to create lzma_alone_encoder");
+                }
             }
         }
     }
@@ -338,9 +369,6 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
     {
         arg_memlimit = luaL_checkinteger(L, 1);
         luaL_argcheck(L, arg_memlimit == LUA_MININTEGER || arg_memlimit >= 0, 1, "memlimit must be an integer greater than or equal to 0");
-        
-        arg_flags = luaL_checkinteger(L, 2);
-        luaL_argcheck(L, arg_flags >= 0, 2, "flags must be an integer greater than or equal to 0");
 
         if (arg_memlimit == LUA_MININTEGER)
         {
@@ -355,23 +383,48 @@ static int lua_xz_stream_new(lua_State *L, int is_writer)
             memlimit = (uint64_t)arg_memlimit;
         }
 
-        flags = (uint32_t)arg_flags;
-
-        ret = lzma_stream_decoder(
-            &stream->strm,
-            memlimit,
-            flags);
-
-        if (ret != LZMA_OK)
+        if (is_xz)
         {
-            switch (ret)
+            arg_flags = luaL_checkinteger(L, 2);
+            luaL_argcheck(L, arg_flags >= 0, 2, "flags must be an integer greater than or equal to 0");
+
+            flags = (uint32_t)arg_flags;
+
+            ret = lzma_stream_decoder(
+                &stream->strm,
+                memlimit,
+                flags);
+    
+            if (ret != LZMA_OK)
             {
-            case LZMA_MEM_ERROR:
-                return luaL_error(L, "Memory allocation failed");
-            case LZMA_OPTIONS_ERROR:
-                return luaL_error(L, "Unsupported decompressor flags");
-            default:
-                return luaL_error(L, "Failed to create lzma_stream_decoder");
+                switch (ret)
+                {
+                case LZMA_MEM_ERROR:
+                    return luaL_error(L, "Memory allocation failed");
+                case LZMA_OPTIONS_ERROR:
+                    return luaL_error(L, "Unsupported decompressor flags");
+                default:
+                    return luaL_error(L, "Failed to create lzma_stream_decoder");
+                }
+            }
+        }
+        else
+        {
+            ret = lzma_alone_decoder(
+                &stream->strm,
+                memlimit);
+    
+            if (ret != LZMA_OK)
+            {
+                switch (ret)
+                {
+                case LZMA_MEM_ERROR:
+                    return luaL_error(L, "Memory allocation failed");
+                case LZMA_OPTIONS_ERROR:
+                    return luaL_error(L, "Unsupported decompressor flags");
+                default:
+                    return luaL_error(L, "Failed to create lzma_alone_decoder");
+                }
             }
         }
     }
@@ -622,14 +675,24 @@ static int lua_xz_stream_exec(lua_State *L)
     return 0;
 }
 
-static int lua_xz_stream_writer(lua_State *L)
+static int lua_xz_stream_xzwriter(lua_State *L)
 {
-    return lua_xz_stream_new(L, 1);
+    return lua_xz_stream_new(L, 1, 1);
 }
 
-static int lua_xz_stream_reader(lua_State *L)
+static int lua_xz_stream_xzreader(lua_State *L)
 {
-    return lua_xz_stream_new(L, 0);
+    return lua_xz_stream_new(L, 1, 0);
+}
+
+static int lua_xz_stream_lzmawriter(lua_State *L)
+{
+    return lua_xz_stream_new(L, 0, 1);
+}
+
+static int lua_xz_stream_lzmareader(lua_State *L)
+{
+    return lua_xz_stream_new(L, 0, 0);
 }
 
 static int lua_xz_stream_close(lua_State *L)
@@ -654,8 +717,10 @@ static int lua_xz_stream_newindex(lua_State *L)
 static const luaL_Reg lua_xz_stream_functions[] = {
     {"close", lua_xz_stream_close},
     {"exec", lua_xz_stream_exec},
-    {"reader", lua_xz_stream_reader},
-    {"writer", lua_xz_stream_writer},
+    {"lzmareader", lua_xz_stream_lzmareader},
+    {"lzmawriter", lua_xz_stream_lzmawriter},
+    {"xzreader", lua_xz_stream_xzreader},
+    {"xzwriter", lua_xz_stream_xzwriter},
     {"__gc", lua_xz_stream_close},
     {NULL, NULL}
 };

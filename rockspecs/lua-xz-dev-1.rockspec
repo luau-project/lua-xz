@@ -9,8 +9,8 @@ source = {
 description = {
    homepage = "https://github.com/luau-project/lua-xz",
    license = "MIT",
-   summary = [[Streaming interface to read/write xz files in Lua]],
-   detailed = [=[lua-xz is a lightweight, native library for Lua providing a streaming interface to read/write xz files.
+   summary = [[Streaming interface to read/write .lzma and .xz files in Lua]],
+   detailed = [=[lua-xz is a lightweight, native library for Lua providing a streaming interface to read/write .lzma and .xz files.
 
 Visit the repository for more information.]=]
 }

@@ -8,7 +8,7 @@
 
 ## Overview
 
-**lua-xz** is a lightweight, native library for Lua providing a streaming interface to read/write xz files. To do so, ```lua-xz``` uses the general-purpose data compression [liblzma](https://github.com/tukaani-project/xz) library.
+**lua-xz** is a lightweight, native library for Lua providing a streaming interface to read/write .lzma and .xz files. To do so, ```lua-xz``` uses the general-purpose data compression `liblzma` library from [XZ Utils](https://tukaani.org/xz/).
 
 > [!NOTE]
 > 
@@ -23,8 +23,10 @@
     * [Simulate compression in chunks](#simulate-compression-in-chunks)
 * [Constants](#constants)
 * [Classes](#classes)
-    * [stream (reader)](#stream-reader)
-    * [stream (writer)](#stream-writer)
+    * [stream (lzmareader)](#stream-lzmareader)
+    * [stream (lzmawriter)](#stream-lzmawriter)
+    * [stream (xzreader)](#stream-xzreader)
+    * [stream (xzwriter)](#stream-xzwriter)
 * [Known limitations](#known-limitations)
 * [Change log](#change-log)
 * [Future works](#future-works)
@@ -63,7 +65,7 @@ Through the streaming interface, three examples are shown:
 * Decompress a file
 * Simulate compression in chunks
 
-### Compress a file
+### Compress a file to .xz format
 
 For this example, we compress the ```README.md``` file of this project, which might even become larger than the original due its small size. In the end of the script execution, a file named  ```README.md.xz``` is written to disk.
 
@@ -100,7 +102,7 @@ local compressed_filename = filename .. ".xz"
 local ok, stream = pcall(
     function()
         local check = xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
-        return xz.stream.writer(xz.PRESET_DEFAULT, check)
+        return xz.stream.xzwriter(xz.PRESET_DEFAULT, check)
     end
 )
 
@@ -180,9 +182,9 @@ output:close()
 input:close()
 ```
 
-### Decompress a file
+### Decompress a file from .xz format
 
-For this example, we decompress the ```README.md.xz``` file created by [Compress a file](#compress-a-file) above, and we output a file named ```copy-of-README.md```, which should be a perfect copy of this ```README.md``` file.
+For this example, we decompress the ```README.md.xz``` file created by [Compress a file](#compress-a-file) above, and we output a file named ```xz-copy-of-README.md```, which should be a perfect copy of this ```README.md``` file.
 
 ```lua
 -- load the library
@@ -192,7 +194,7 @@ local xz = require("lua-xz")
 local filename = "README.md.xz"
 
 -- the decompressed file name
-local decompressed_filename = "copy-of-" .. (filename:gsub("%.xz$", ""))
+local decompressed_filename = "xz-copy-of-" .. (filename:gsub("%.xz$", ""))
 
 -- create a reader stream
 -- 
@@ -209,7 +211,7 @@ local decompressed_filename = "copy-of-" .. (filename:gsub("%.xz$", ""))
 -- tip: always check for errors
 local ok, stream = pcall(
     function()
-        return xz.stream.reader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
+        return xz.stream.xzreader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
     end
 )
 
@@ -289,9 +291,9 @@ output:close()
 input:close()
 ```
 
-### Simulate compression in chunks
+### Simulate compression in chunks to .xz format
 
-As a last example, we simulate compression in chunks. The idea is that data can come in chunks from HTTPS requests, and we feed a writer stream to compress the data coming from the internet to disk. In the end, decompression is performed on the saved file on disk, and the inputs are matched against the decompressed output.
+As a last example, we simulate compression in chunks to .xz format. The idea is that data can come in chunks from HTTPS requests, and we feed a writer stream to compress the data coming from the internet to disk. In the end, decompression is performed on the saved file on disk, and the inputs are matched against the decompressed output.
 
 ```lua
 local xz = require("lua-xz")
@@ -313,7 +315,7 @@ do
     local ok, writer_stream = pcall(
         function()
             local check = xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
-            return xz.stream.writer(xz.PRESET_DEFAULT, check)
+            return xz.stream.xzwriter(xz.PRESET_DEFAULT, check)
         end
     )
 
@@ -383,7 +385,7 @@ do
     -- tip: always check for errors
     local ok, reader_stream = pcall(
         function()
-            return xz.stream.reader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
+            return xz.stream.xzreader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
         end
     )
 
@@ -483,26 +485,103 @@ assert(
 
 ## Classes
 
-In order to provide a streaming interface to read/write xz files, a core class ```stream``` is exposed such that its behavior comes in two flavours depending on the creation method: a ```reader``` stream and also a ```writer``` stream.
+In order to provide a streaming interface to read/write .lzma and .xz files, a core class ```stream``` is exposed such that its behavior comes in four flavours depending on the creation method:
+
+* a ```lzmareader``` stream to read .lzma files;
+* a ```lzmawriter``` stream to write .lzma files;
+* a ```xzreader``` stream to read .xz files;
+* a ```xzwriter``` stream to write .xz files.
 
 The stream class can be accessed through the ```stream``` key of the ```lua-xz``` library:
 
 ```lua
 local xz = require("lua-xz")
--- call the method `xz.stream.reader' to create a reader stream
--- or the method `xz.stream.writer' to create a writer stream.
+-- call the method `xz.stream.xzreader' to create a xzreader stream
+-- or the method `xz.stream.xzwriter' to create a xzwriter stream.
+--
+-- alternatively, the method `xz.stream.lzmareader' creates a lzmareader stream
+-- or the method `xz.stream.lzmawriter' to create a lzmawriter stream.
 ```
 
-### stream (reader)
+### stream (lzmareader)
+
+A stream to decompress data from .lzma formatted content
+
+#### Static methods
+
+##### lzmareader
+
+* *Description*: Creates a reader stream to decompress data from .lzma formatted content
+* *Signature*: ```xz.stream.lzmawriter(memlimit)```
+* *Parameters*: 
+    * *memlimit* (```integer```): Memory usage limit as bytes. Use ```xz.MEMLIMIT_UNLIMITED``` to effectively disable the limiter;
+* *Return* (```userdata```): An instance of the stream reader class.
+
+#### Instance methods
+
+##### close
+
+* *Description*: Closes the reader stream and free resources
+* *Signature*: ```stream:close()```
+    * *stream* (```userdata```): An instance of the stream class;
+    * *Return* (```void```): Nothing.
+
+##### exec
+
+* *Description*: Feeds data to be decompressed
+* *Signature*: ```stream:exec(producer, consumer [, buffersize ])```
+    * *stream* (```userdata```): An instance of the stream class;
+    * *Parameters*: 
+        * *data* (```string```): The data to feed the stream;
+        * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes decompression faster, at a price of higher memory consumption;
+    * *Return* (```void```)
+
+### stream (lzmawriter)
+
+A stream to compress data to .lzma format
+
+#### Static methods
+
+##### lzmawriter
+
+* *Description*: Creates a writer stream to compress data to .lzma format
+* *Signature*: ```xz.stream.lzmawriter(preset)```
+* *Parameters*: 
+    * *preset* (```integer | string```): Compression level as an integer [0, 9] or string with a single digit [0-9] occasionally followed by 'e' character to indicate extreme compression preset. For instance, these are valid values:
+        * an integer: 0, ..., 9;
+        * a string: "0", ..., "9";
+        * a string: "0e", ..., "9e".
+* *Return* (```userdata```): An instance of the stream writer class.
+
+#### Instance methods
+
+##### close
+
+* *Description*: Closes the writer stream and free resources
+* *Signature*: ```stream:close()```
+    * *stream* (```userdata```): An instance of the stream class;
+    * *Return* (```void```): Nothing.
+
+##### exec
+
+* *Description*: Feeds data to be compressed
+* *Signature*: ```stream:exec(producer, consumer [, buffersize ])```
+    * *stream* (```userdata```): An instance of the stream class;
+    * *Parameters*: 
+        * *data* (```string```): The data to feed the stream;
+        * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes compression faster, at a price of higher memory consumption;
+    * *Return* (```void```)
+
+### stream (xzreader)
 
 A stream to decompress data from .xz formatted content
 
 #### Static methods
 
-##### reader
+##### xzreader
 
 * *Description*: Creates a reader stream to decompress data from .xz formatted content
-* *Signature*: ```xz.stream.reader(memlimit, flags)```
+* *Signature*: ```xz.stream.xzreader(memlimit, flags)```
 * *Parameters*: 
     * *memlimit* (```integer```): Memory usage limit as bytes. Use ```xz.MEMLIMIT_UNLIMITED``` to effectively disable the limiter;
     * *flags* (```integer```): Bitwise-or of zero or more of the decoder flags (for now, only ```xz.CONCATENATED``` is provided as constant);
@@ -527,16 +606,16 @@ A stream to decompress data from .xz formatted content
         * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes decompression faster, at a price of higher memory consumption;
     * *Return* (```void```)
 
-### stream (writer)
+### stream (xzwriter)
 
 A stream to compress data to .xz format
 
 #### Static methods
 
-##### writer
+##### xzwriter
 
 * *Description*: Creates a writer stream to compress data to .xz format
-* *Signature*: ```xz.stream.writer(preset, check)```
+* *Signature*: ```xz.stream.xzwriter(preset, check)```
 * *Parameters*: 
     * *preset* (```integer | string```): Compression level as an integer [0, 9] or string with a single digit [0-9] occasionally followed by 'e' character to indicate extreme compression preset. For instance, these are valid values:
         * an integer: 0, ..., 9;

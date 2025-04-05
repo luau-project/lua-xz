@@ -17,7 +17,7 @@ do
     local ok, writer_stream = pcall(
         function()
             local check = xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
-            return xz.stream.writer(xz.PRESET_DEFAULT, check)
+            return xz.stream.xzwriter(xz.PRESET_DEFAULT, check)
         end
     )
 
@@ -87,7 +87,7 @@ do
     -- tip: always check for errors
     local ok, reader_stream = pcall(
         function()
-            return xz.stream.reader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
+            return xz.stream.xzreader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
         end
     )
 
