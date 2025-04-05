@@ -1063,7 +1063,7 @@ A stream to compress data to .xz format
 
 ### check
 
-Holds constants and methods regarding integrity checks on the encoding of .xz files.
+Holds constants and methods regarding the calculation of integrity checks during the encoding of .xz files.
 
 #### Constants
 
