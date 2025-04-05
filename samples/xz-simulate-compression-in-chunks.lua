@@ -65,6 +65,12 @@ do
 
         -- an error occurred ?
         if (not ok) then
+            -- close the stream
+            writer_stream:close()
+
+            -- close files
+            output_file:close()
+
             -- raise the error
             error(exec_err)
         end
@@ -106,11 +112,8 @@ do
 
         -- define the number of bytes
         -- to be read from the input file
-        -- in a single chunk.
-        -- In a real world scenario,
-        -- 8kb (8 * 1024) would be
-        -- a reasonable value
-        local chunk_size = 64
+        -- in a single chunk (8 kb).
+        local chunk_size = 8 * 1024
 
         -- read the chunk from file
         local chunk = input_file:read(chunk_size)
@@ -135,9 +138,15 @@ do
                 reader_stream:exec(producer, consumer)
             end
         )
-    
+
         -- an error occurred ?
         if (not ok) then
+            -- close the stream
+            reader_stream:close()
+
+            -- close files
+            output_file:close()
+
             -- raise the error
             error(exec_err)
         end

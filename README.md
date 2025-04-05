@@ -26,7 +26,7 @@
         * [Compress a file to .xz format](#compress-a-file-to-xz-format)
         * [Decompress a file from .xz format](#decompress-a-file-from-xz-format)
         * [Simulate compression in chunks to .xz format](#simulate-compression-in-chunks-to-xz-format)
-* [Constants](#constants)
+* [Library Constants](#library-constants)
 * [Classes](#classes)
     * [stream (lzmareader)](#stream-lzmareader)
     * [stream (lzmawriter)](#stream-lzmawriter)
@@ -164,6 +164,13 @@ do
 
     -- an error occurred ?
     if (not ok) then
+        -- close the stream
+        stream:close()
+
+        -- close files
+        output:close()
+        input:close()
+
         -- raise the error
         error(exec_err)
     end
@@ -268,6 +275,13 @@ do
 
     -- an error occurred ?
     if (not ok) then
+        -- close the stream
+        stream:close()
+
+        -- close files
+        output:close()
+        input:close()
+
         -- raise the error
         error(exec_err)
     end
@@ -358,6 +372,12 @@ do
 
         -- an error occurred ?
         if (not ok) then
+            -- close the stream
+            writer_stream:close()
+
+            -- close files
+            output_file:close()
+
             -- raise the error
             error(exec_err)
         end
@@ -399,11 +419,8 @@ do
 
         -- define the number of bytes
         -- to be read from the input file
-        -- in a single chunk.
-        -- In a real world scenario,
-        -- 8kb (8 * 1024) would be
-        -- a reasonable value
-        local chunk_size = 64
+        -- in a single chunk (8 kb).
+        local chunk_size = 8 * 1024
 
         -- read the chunk from file
         local chunk = input_file:read(chunk_size)
@@ -428,9 +445,15 @@ do
                 reader_stream:exec(producer, consumer)
             end
         )
-    
+
         -- an error occurred ?
         if (not ok) then
+            -- close the stream
+            reader_stream:close()
+
+            -- close files
+            output_file:close()
+
             -- raise the error
             error(exec_err)
         end
@@ -558,6 +581,13 @@ do
 
     -- an error occurred ?
     if (not ok) then
+        -- close the stream
+        stream:close()
+
+        -- close files
+        output:close()
+        input:close()
+
         -- raise the error
         error(exec_err)
     end
@@ -666,6 +696,13 @@ do
 
     -- an error occurred ?
     if (not ok) then
+        -- close the stream
+        stream:close()
+
+        -- close files
+        output:close()
+        input:close()
+
         -- raise the error
         error(exec_err)
     end
@@ -757,6 +794,12 @@ do
 
         -- an error occurred ?
         if (not ok) then
+            -- close the stream
+            writer_stream:close()
+
+            -- close files
+            output_file:close()
+
             -- raise the error
             error(exec_err)
         end
@@ -798,11 +841,8 @@ do
 
         -- define the number of bytes
         -- to be read from the input file
-        -- in a single chunk.
-        -- In a real world scenario,
-        -- 8kb (8 * 1024) would be
-        -- a reasonable value
-        local chunk_size = 64
+        -- in a single chunk (8 kb).
+        local chunk_size = 8 * 1024
 
         -- read the chunk from file
         local chunk = input_file:read(chunk_size)
@@ -827,9 +867,15 @@ do
                 reader_stream:exec(producer, consumer)
             end
         )
-    
+
         -- an error occurred ?
         if (not ok) then
+            -- close the stream
+            reader_stream:close()
+
+            -- close files
+            output_file:close()
+
             -- raise the error
             error(exec_err)
         end
@@ -856,14 +902,14 @@ assert(
 
 [Back to ToC](#table-of-contents)
 
-## Constants
+## Library Constants
 
 | Key | Type | Description |
 |---|---|---|
 | version | string | Version of the binding (e.g.: 0.0.1) |
 | _VERSION | string | Version of the underlying ```liblzma``` library (e.g.: 5.8.1) |
 | MEMLIMIT_UNLIMITED | integer | A custom value in Lua to disable a memory limit |
-| CONCATENATED | integer | Flag to enable decoding of concatenated files |
+| CONCATENATED | integer | Flag to enable decoding of concatenated streams |
 | PRESET_DEFAULT | integer | Default compression preset |
 
 > [!NOTE]

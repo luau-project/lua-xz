@@ -90,6 +90,13 @@ do
 
     -- an error occurred ?
     if (not ok) then
+        -- close the stream
+        stream:close()
+
+        -- close files
+        output:close()
+        input:close()
+
         -- raise the error
         error(exec_err)
     end
