@@ -145,7 +145,7 @@ do
             reader_stream:close()
 
             -- close files
-            output_file:close()
+            input_file:close()
 
             -- raise the error
             error(exec_err)
