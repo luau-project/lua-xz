@@ -53,7 +53,10 @@ jobs:
           path: lua-xz
 
       - name: Install dependencies
-        run: sudo apt install -y liblzma-dev libreadline-dev
+        run: |
+          sudo apt update
+          sudo apt upgrade -y
+          sudo apt install -y liblzma-dev libreadline-dev
 
       - name: Install clang
         if: ${{ matrix.use-clang == 'true' }}
@@ -183,7 +186,10 @@ jobs:
           path: lua-xz
 
       - name: Install dependencies
-        run: sudo apt install -y liblzma-dev libreadline-dev clang
+        run: |
+          sudo apt update
+          sudo apt upgrade -y
+          sudo apt install -y liblzma-dev libreadline-dev clang
 
       - name: Download and extract Lua ${{ matrix.lua-version }} source code, and set environment variables
         run: |
@@ -743,6 +749,8 @@ jobs:
 
       - name: Install LuaRocks dependencies to upload
         run: |
+          sudo apt update
+          sudo apt upgrade -y
           sudo apt install -y libssl-dev;
           luarocks install dkjson;
           luarocks install luasocket;
