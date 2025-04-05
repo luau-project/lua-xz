@@ -15,7 +15,7 @@ env:
   DEV_ROCKSPEC: lua-xz-dev-1.rockspec
 
 jobs:
-  
+
   cplusplus-build:
     name: Build C++
     runs-on: ubuntu-latest
@@ -305,6 +305,13 @@ jobs:
       LUAROCKS_WINDOWS_DEPS_DIR: C:\external
       LIBLZMA_WINDOWS_VERSION: 5.8.1
 
+      # use a .tar.xz file
+      # released by the Linux kernel team
+      # to test the behavior of lua-xz
+      # on huge files.
+      LINUX_KERNEL_MAJOR_VERSION: 6
+      LINUX_KERNEL_MINOR_VERSION: 14
+
     steps:
 
       - name: Set environment variable to hold the rockspec name
@@ -322,6 +329,24 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: lua-xz
+
+      - name: Restore Linux Kernel tarball
+        id: restore-linux-kernel-tarball
+        uses: actions/cache/restore@v4
+        with:
+          path: "lua-xz/linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}.tar.xz"
+          key: "linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}"
+
+      - name: Download Linux Kernel tarball
+        if: ${{ steps.restore-linux-kernel-tarball.outputs.cache-hit != 'true' }}
+        run: curl -L -o "lua-xz/linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}.tar.xz" "https://cdn.kernel.org/pub/linux/kernel/v${{ env.LINUX_KERNEL_MAJOR_VERSION }}.x/linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}.tar.xz"
+
+      - name: Save Linux Kernel tarball
+        if: ${{ steps.restore-linux-kernel-tarball.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: "lua-xz/linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}.tar.xz"
+          key: "linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}"
 
       - name: Setup MSVC dev-prompt
         if: ${{ runner.os == 'Windows' && !startsWith(matrix.lua-version, 'luajit') }}
@@ -389,7 +414,38 @@ jobs:
         run: |
           $install_prefix_bin = Join-Path -Path "${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" -ChildPath "bin";
           Add-Content "${{ github.path }}" "${install_prefix_bin}";
-      
+
+      - name: Extract the Linux Kernel tarball and set environment variables to hold the their file names
+        run: |
+          $tar_file = "linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}.tar";
+          $tarxz_file = $tar_file + ".xz";
+
+          $expected_path = Join-Path -Path "lua-xz" -ChildPath "${tarxz_file}";
+          if (-not (Test-Path -Path "${expected_path}"))
+          {
+            $color = (0x1b -as [char]) + "[31m";
+
+            Write-Host "${color}Linux Kernel archive (${expected_path}) was not found";
+            exit 1;
+          }
+
+          xz --decompress --keep "${expected_path}";
+
+          foreach ($filename in $tar_file, $tarxz_file)
+          {
+            $expected_path = Join-Path -Path "lua-xz" -ChildPath "${filename}";
+            if (-not (Test-Path -Path "${expected_path}"))
+            {
+              $color = (0x1b -as [char]) + "[31m";
+
+              Write-Host "${color}Linux Kernel archive (${expected_path}) was not found";
+              exit 1;
+            }
+          }
+
+          Add-Content "${{ github.env }}" "LINUX_KERNEL_TAR=${tar_file}";
+          Add-Content "${{ github.env }}" "LINUX_KERNEL_TAR_XZ=${tarxz_file}";
+  
       - name: Setup Lua
         uses: luarocks/gh-actions-lua@v10
         with:
@@ -447,7 +503,78 @@ jobs:
                 exit 1;
               }
             };
-  
+
+      # Here, we decompress the Linux Kernel .tar.xz
+      # through lua-xz, then we compare the SHA512 hash
+      # of the .tar file generated both by
+      # xz and lua-xz. If both SHA512 hash matches,
+      # then we are safe.
+
+      # After checking decompression hashes, we compress
+      # the .tar file again, however this time with
+      # lua-xz. Then we decompress the .tar.xz generated
+      # by lua-xz through xz, and we compare SHA512 hashes
+      # again.
+
+      # This 'decompress - compress - decompress' scheme
+      # should ensure a proper behavior of 
+      # lua-xz library
+      - name: Test lua-xz on Linux Kernel archives
+        working-directory: lua-xz
+        run: |
+          lua ci-only-test/xz-decompress-linux-kernel.lua "${{ env.LINUX_KERNEL_TAR_XZ }}";
+
+          if ($LASTEXITCODE -ne 0)
+          {
+            $color = (0x1b -as [char]) + "[31m";
+
+            Write-Host "${color}Failed to decompress ${{ env.LINUX_KERNEL_TAR_XZ }}";
+            exit 1;
+          }
+
+          $expected_tar_hash = Get-FileHash -Path "${{ env.LINUX_KERNEL_TAR }}" -Algorithm "SHA512" |
+            Select-Object -ExpandProperty Hash;
+
+          $generated_tar = "xz-copy-of-${{ env.LINUX_KERNEL_TAR }}";
+
+          $got_tar_hash = Get-FileHash -Path "${generated_tar}" -Algorithm "SHA512" |
+            Select-Object -ExpandProperty Hash;
+
+          if ($expected_tar_hash -ne $got_tar_hash)
+          {
+            $color = (0x1b -as [char]) + "[31m";
+
+            Write-Host "${color}SHA512 hash mismatch for file ${{ env.LINUX_KERNEL_TAR }}: (Expected: ${expected_tar_hash}), (Got: ${got_tar_hash})";
+            exit 1;
+          }
+
+          $generated_tarxz = $generated_tar + ".xz";
+
+          lua ci-only-test/xz-compress-copy-of-linux-kernel.lua "${generated_tar}";
+
+          if ($LASTEXITCODE -ne 0)
+          {
+            $color = (0x1b -as [char]) + "[31m";
+
+            Write-Host "${color}Failed to compress ${generated_tar}";
+            exit 1;
+          }
+
+          Remove-Item -Path "${generated_tar}" -Force;
+
+          xz --decompress --keep "${generated_tarxz}";
+
+          $rehash_tar_hash = Get-FileHash -Path "${generated_tar}" -Algorithm "SHA512" |
+            Select-Object -ExpandProperty Hash;
+
+          if ($expected_tar_hash -ne $rehash_tar_hash)
+          {
+            $color = (0x1b -as [char]) + "[31m";
+
+            Write-Host "${color}SHA512 hash mismatch for file ${generated_tar}: (Expected: ${expected_tar_hash}), (Got: ${rehash_tar_hash})";
+            exit 1;
+          }
+
   msys2-build:
     name: MSYS2 Build
     runs-on: windows-latest
