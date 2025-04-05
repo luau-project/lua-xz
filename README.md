@@ -18,11 +18,11 @@
 
 * [Installation](#installation)
 * [Usage](#usage)
-    * [lzma]
+    * [lzma](#lzma)
         * [Compress a file to .lzma format](#compress-a-file-to-lzma-format)
         * [Decompress a file from .lzma format](#decompress-a-file-from-lzma-format)
         * [Simulate compression in chunks to .lzma format](#simulate-compression-in-chunks-to-lzma-format)
-    * [xz]
+    * [xz](#xz)
         * [Compress a file to .xz format](#compress-a-file-to-xz-format)
         * [Decompress a file from .xz format](#decompress-a-file-from-xz-format)
         * [Simulate compression in chunks to .xz format](#simulate-compression-in-chunks-to-xz-format)
@@ -32,6 +32,7 @@
     * [stream (lzmawriter)](#stream-lzmawriter)
     * [stream (xzreader)](#stream-xzreader)
     * [stream (xzwriter)](#stream-xzwriter)
+    * [check](#check)
 * [Known limitations](#known-limitations)
 * [Change log](#change-log)
 * [Future works](#future-works)
@@ -183,6 +184,8 @@ output:close()
 input:close()
 ```
 
+[Back to ToC](#table-of-contents)
+
 #### Decompress a file from .lzma format
 
 For this example, we decompress the ```README.md.lzma``` file created by [Compress a file to .lzma format](#compress-a-file-to-lzma-format) above, and we output a file named ```lzma-copy-of-README.md```, which should be a perfect copy of this ```README.md``` file.
@@ -287,6 +290,8 @@ output:close()
 -- close the input file
 input:close()
 ```
+
+[Back to ToC](#table-of-contents)
 
 #### Simulate compression in chunks to .lzma format
 
@@ -456,6 +461,8 @@ assert(
 )
 ```
 
+[Back to ToC](#table-of-contents)
+
 ### xz
 
 Usage to compress and decompress .xz files
@@ -577,6 +584,8 @@ output:close()
 input:close()
 ```
 
+[Back to ToC](#table-of-contents)
+
 #### Decompress a file from .xz format
 
 For this example, we decompress the ```README.md.xz``` file created by [Compress a file to .xz format](#compress-a-file-to-xz-format) above, and we output a file named ```xz-copy-of-README.md```, which should be a perfect copy of this ```README.md``` file.
@@ -685,6 +694,8 @@ output:close()
 -- close the input file
 input:close()
 ```
+
+[Back to ToC](#table-of-contents)
 
 #### Simulate compression in chunks to .xz format
 
@@ -855,6 +866,8 @@ assert(
 )
 ```
 
+[Back to ToC](#table-of-contents)
+
 ## Constants
 
 | Key | Type | Description |
@@ -864,10 +877,6 @@ assert(
 | MEMLIMIT_UNLIMITED | integer | A custom value in Lua to disable a memory limit |
 | CONCATENATED | integer | Flag to enable decoding of concatenated files |
 | PRESET_DEFAULT | integer | Default compression preset |
-| check.NONE | integer | No integrity check is calculated |
-| check.CRC32 | integer | Calculate CRC32 integrity check using the polynomial from the IEEE 802.3 standard |
-| check.CRC64 | integer | Calculate CRC64 integrity check using the polynomial from the ECMA-182 standard |
-| check.SHA256 | integer | SHA256 integrity check |
 
 > [!NOTE]
 > 
@@ -877,6 +886,8 @@ assert(
 > local xz = require("lua-xz")
 > print(xz._VERSION)
 > ```
+
+[Back to ToC](#table-of-contents)
 
 ## Classes
 
@@ -897,6 +908,10 @@ local xz = require("lua-xz")
 -- alternatively, the method `xz.stream.lzmareader' creates a lzmareader stream
 -- or the method `xz.stream.lzmawriter' to create a lzmawriter stream.
 ```
+
+Moreover, a ```check``` class is also provided to hold constants and methods regarding integrity checks on the encoding of .xz files.
+
+[Back to ToC](#table-of-contents)
 
 ### stream (lzmareader)
 
@@ -930,6 +945,8 @@ A stream to decompress data from .lzma formatted content
         * *data* (```string```): The data to feed the stream;
         * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes decompression faster, at a price of higher memory consumption;
     * *Return* (```void```)
+
+[Back to ToC](#table-of-contents)
 
 ### stream (lzmawriter)
 
@@ -967,6 +984,8 @@ A stream to compress data to .lzma format
         * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes compression faster, at a price of higher memory consumption;
     * *Return* (```void```)
 
+[Back to ToC](#table-of-contents)
+
 ### stream (xzreader)
 
 A stream to decompress data from .xz formatted content
@@ -1001,6 +1020,8 @@ A stream to decompress data from .xz formatted content
         * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes decompression faster, at a price of higher memory consumption;
     * *Return* (```void```)
 
+[Back to ToC](#table-of-contents)
+
 ### stream (xzwriter)
 
 A stream to compress data to .xz format
@@ -1016,7 +1037,7 @@ A stream to compress data to .xz format
         * an integer: 0, ..., 9;
         * a string: "0", ..., "9";
         * a string: "0e", ..., "9e".
-    * *check* (```integer```): Type of the integrity check to calculate from uncompressed data;
+    * *check* (```integer```): Type of the integrity check to calculate from uncompressed data. See [check constants](#constants-1) for all the possible values as constants;
 * *Return* (```userdata```): An instance of the stream writer class.
 
 #### Instance methods
@@ -1037,6 +1058,43 @@ A stream to compress data to .xz format
         * *data* (```string```): The data to feed the stream;
         * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes compression faster, at a price of higher memory consumption;
     * *Return* (```void```)
+
+[Back to ToC](#table-of-contents)
+
+### check
+
+Holds constants and methods regarding integrity checks on the encoding of .xz files.
+
+#### Constants
+
+| Key | Type | Description |
+|---|---|---|
+| NONE | integer | No integrity check is calculated |
+| CRC32 | integer | Calculate CRC32 integrity check using the polynomial from the IEEE 802.3 standard |
+| CRC64 | integer | Calculate CRC64 integrity check using the polynomial from the ECMA-182 standard |
+| SHA256 | integer | SHA256 integrity check |
+
+> [!NOTE]
+> 
+> Each constant above can be accessed through its key in the class. For instance, the ```CRC32``` integrity check can be printed through the following code
+> 
+> ```lua
+> local xz = require("lua-xz")
+> print(xz.check.CRC32)
+> ```
+
+#### Static methods
+
+##### supported
+
+* *Description*: Test if the given integrity check is supported.
+* *Signature*: ```xz.check.supported(check)```
+    * *Parameters*:
+        * *check* (```integer```): Type of the integrity check to calculate from uncompressed data. **Note**: it is safe to call this with a value that is not in the range [0, 15]; in that case the return value is always false.
+    * *Remark*: `xz.check.NONE` and `xz.check.CRC32` are always supported (even if `liblzma` is built with limited features).
+    * *Return* (```void```)
+
+[Back to ToC](#table-of-contents)
 
 ## Known limitations
 
