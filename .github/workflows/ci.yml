@@ -274,7 +274,211 @@ jobs:
                 exit 1;
               }
             };
-  
+
+  make-build:
+    name: Makefiles Build
+    runs-on: ${{ matrix.os }}
+    
+    defaults:
+      run:
+        shell: pwsh
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        
+        lua-version:
+          - 5.1
+          - 5.2
+          - 5.3
+          - 5.4
+          - luajit
+          - luajit-openresty
+
+        os:
+          - windows-latest
+
+    env:
+      LUAROCKS_WINDOWS_DEPS_DIR: C:\external
+      LIBLZMA_WINDOWS_VERSION: 5.8.1
+      LUA_XZ_WINDOWS_INSTALL_DIR: C:\lua-xz
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: lua-xz
+
+      - name: Setup MSVC dev-prompt
+        if: ${{ runner.os == 'Windows' && !startsWith(matrix.lua-version, 'luajit') }}
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Download, extract, configure, build and install liblzma
+        run: |
+          $tarball = Join-Path -Path "${{ runner.temp }}" -ChildPath "xz-${{ env.LIBLZMA_WINDOWS_VERSION }}.tar.gz";
+          Invoke-WebRequest `
+            -Uri "https://github.com/tukaani-project/xz/releases/download/v${{ env.LIBLZMA_WINDOWS_VERSION }}/xz-${{ env.LIBLZMA_WINDOWS_VERSION }}.tar.gz" `
+            -OutFile "$tarball";
+
+          tar -C "${{ runner.temp }}" -xf "${tarball}";
+          $extracted_dir = Join-Path -Path "${{ runner.temp }}" -ChildPath "xz-${{ env.LIBLZMA_WINDOWS_VERSION }}";
+
+          if ("${{ runner.os }}" -eq "macOS")
+          {
+            cd "${extracted_dir}";
+            ./configure;
+            make;
+            sudo make install;
+          }
+          else
+          {
+            $build_dir = Join-Path -Path "${{ runner.temp }}" -ChildPath "build-xz";
+            $cmake_generator = "Unix Makefiles";
+            $install_prefix = "/usr/local";
+
+            if ("${{ runner.os }}" -eq "Windows")
+            {
+              $install_prefix = "${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}";
+              if ("${{ matrix.lua-version }}".StartsWith("luajit"))
+              {
+                $cmake_generator = "MinGW Makefiles";
+              }
+              else
+              {
+                $cmake_generator = "NMake Makefiles";
+              }
+            }
+
+            cmake `
+              -G "${cmake_generator}" `
+              -DCMAKE_BUILD_TYPE=Release `
+              -DBUILD_SHARED_LIBS=ON `
+              --install-prefix "${install_prefix}" `
+              -S "${extracted_dir}" `
+              -B "${build_dir}";
+
+            cmake --build "${build_dir}" --config Release;
+
+            if ("${{ runner.os }}" -eq "Windows")
+            {
+              cmake --install "${build_dir}" --config Release;
+            }
+            else
+            {
+              sudo cmake --install "${build_dir}" --config Release;
+              sudo ldconfig;
+            }
+          }
+
+      - name: On Windows, add the directory of liblzma DLL to system environment PATH variable
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          $install_prefix_bin = Join-Path -Path "${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" -ChildPath "bin";
+          Add-Content "${{ github.path }}" "${install_prefix_bin}";
+
+      - name: Setup Lua
+        uses: luarocks/gh-actions-lua@v10
+        with:
+          luaVersion: ${{ matrix.lua-version }}
+
+      - name: Build and install lua-xz
+        working-directory: lua-xz
+        run: |
+          $lua_dir = Join-Path -Path ${{ github.workspace }} -ChildPath ".lua";
+          if ("${{ runner.os }}" -eq "Windows")
+          {
+            if ("${{ matrix.lua-version }}".StartsWith("luajit"))
+            {
+              $lua_lib_fullpath = Get-ChildItem "${lua_dir}" -Recurse -File |
+                Where-Object { $_.FullName.EndsWith(".dll.a") } |
+                Select-Object -ExpandProperty FullName -First 1;
+
+              $lua_lib = [System.IO.Path]::GetFileNameWithoutExtension([System.IO.Path]::GetFileNameWithoutExtension($lua_lib_fullpath));
+
+              Write-Host "Found Lua import library at ${lua_lib}";
+
+              mingw32-make "-f" "Makefile.mingw" "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" "LUA_DIR=${lua_dir}" "LUA_LIB=${lua_lib}" "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}";
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                $color = (0x1b -as [char]) + "[31m";
+
+                Write-Host "${color}Failed to build through Makefile.mingw";
+                exit 1;
+              }
+
+              mingw32-make "-f" "Makefile.mingw" "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" "LUA_DIR=${lua_dir}" "LUA_LIB=${lua_lib}" "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" install;
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                $color = (0x1b -as [char]) + "[31m";
+
+                Write-Host "${color}Failed to install through Makefile.mingw";
+                exit 1;
+              }
+            }
+            else
+            {
+              $lua_lib = Get-ChildItem "${lua_dir}" -Recurse -File |
+                Where-Object { $_.FullName.EndsWith(".lib") } |
+                Select-Object -ExpandProperty Name -First 1;
+
+              Write-Host "Found Lua import library at ${lua_lib}";
+
+              nmake "/F" "Makefile.msvc" "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" "LUA_DIR=${lua_dir}" "LUA_LIB=${lua_lib}" "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}";
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                $color = (0x1b -as [char]) + "[31m";
+
+                Write-Host "${color}Failed to build through Makefile.msvc";
+                exit 1;
+              }
+
+              nmake "/F" "Makefile.msvc" "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" "LUA_DIR=${lua_dir}" "LUA_LIB=${lua_lib}" "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" install;
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                $color = (0x1b -as [char]) + "[31m";
+
+                Write-Host "${color}Failed to install through Makefile.msvc";
+                exit 1;
+              }
+            }
+
+            $lua_xz_bin_dir = Join-Path -Path "${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" -ChildPath "bin";
+            if (-not (Test-Path -Path $lua_xz_bin_dir))
+            {
+              $color = (0x1b -as [char]) + "[31m";
+
+              Write-Host "${color}lua-xz was not installed properly";
+              exit 1;
+            }
+
+            Add-Content "${{ github.path }}" "${lua_xz_bin_dir}";
+          }
+
+      - name: Run samples
+        working-directory: lua-xz
+        run: |
+          Get-ChildItem "samples" -Recurse -File |
+            Where-Object Extension -EQ ".lua" |
+            Select-Object -ExpandProperty FullName |
+            Foreach-Object {
+              $color = (0x1b -as [char]) + "[36m";
+
+              Write-Host "Running sample file: ${color}$_";
+
+              lua "$_";
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                exit 1;
+              }
+            };
+
   build:
     name: Build
     runs-on: ${{ matrix.os }}
@@ -351,7 +555,7 @@ jobs:
       - name: Setup MSVC dev-prompt
         if: ${{ runner.os == 'Windows' && !startsWith(matrix.lua-version, 'luajit') }}
         uses: ilammy/msvc-dev-cmd@v1
-      
+
       - name: Download, extract, configure, build and install liblzma
         run: |
           $tarball = Join-Path -Path "${{ runner.temp }}" -ChildPath "xz-${{ env.LIBLZMA_WINDOWS_VERSION }}.tar.gz";
@@ -408,7 +612,7 @@ jobs:
               sudo ldconfig;
             }
           }
-      
+
       - name: On Windows, add the directory of liblzma DLL to system environment PATH variable
         if: ${{ runner.os == 'Windows' }}
         run: |
@@ -445,12 +649,12 @@ jobs:
 
           Add-Content "${{ github.env }}" "LINUX_KERNEL_TAR=${tar_file}";
           Add-Content "${{ github.env }}" "LINUX_KERNEL_TAR_XZ=${tarxz_file}";
-  
+
       - name: Setup Lua
         uses: luarocks/gh-actions-lua@v10
         with:
           luaVersion: ${{ matrix.lua-version }}
-      
+
       - name: Setup LuaRocks
         uses: luarocks/gh-actions-luarocks@v5
       
@@ -479,10 +683,10 @@ jobs:
           $rockspec = Get-ChildItem . -Recurse -File |
             Where-Object Name -EQ "${{ env.ROCKSPEC }}" |
             Select-Object -ExpandProperty FullName -First 1;
-          
+
           $color = (0x1b -as [char]) + "[36m";
           Write-Host "Building rockspec file: ${color}${rockspec}";
-          
+
           luarocks make $rockspec;
 
       - name: Run samples
@@ -820,6 +1024,7 @@ jobs:
     needs:
       - cplusplus-build
       - clang-build
+      - make-build
       - build
       - msys2-build
       - cygwin-build
