@@ -65,7 +65,7 @@ Once you finished the initial steps in the [Requirements](#requirements) section
 
     ```cmd
     SET LIBLZMA_VERSION=5.8.1
-    curl -L -O "https://github.com/tukaani-project/xz/releases/download/v%LIBLZMA_VERSION%/xz-%LIBLZMA_VERSION%.tar.gz"
+    curl -L "https://github.com/tukaani-project/xz/releases/download/v%LIBLZMA_VERSION%/xz-%LIBLZMA_VERSION%.tar.gz"
     tar -xf "xz-%LIBLZMA_VERSION%.tar.gz"
     ```
 

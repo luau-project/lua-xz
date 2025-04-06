@@ -267,8 +267,6 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
     /* variables for both */
     lua_xz_stream *stream;
     lzma_ret ret;
-    lua_Integer arg_buffer_size;
-    size_t buffer_size;
     void *ud;
 
     ud = lua_newuserdata(L, sizeof(lua_xz_stream));
