@@ -25,6 +25,6 @@ In short, we provide two manners to build and install `liblzma` + `lua-xz`
 
 ### To play nicely with LuaRocks
 
-* If you used the MSVC toolchain to build Lua, then follow the [MSVC guide](./liblzma-on-windows-for-Lua-MSVC.md);
-* In case you are using MinGW-64 from [MSYS2](https://www.msys2.org/) to build Lua, then follow the [MSYS2 guide](./liblzma-on-windows-for-Lua-MSYS2.md);
-* If you are using a ```gcc``` from [chocolatey](https://chocolatey.org/), [scoop](https://scoop.sh/), [winlibs](https://winlibs.com/), [sourceforge](https://sourceforge.net/projects/mingw/) or [osdn.net](https://osdn.net/projects/mingw/) to build Lua, then follow the [Generic MinGW / MinGW-64 guide](./liblzma-on-windows-for-Lua-MinGW-MinGW-w64.md).
+* Lua built with MSVC toolchain: follow the [MSVC guide](./liblzma-on-windows-for-Lua-MSVC.md);
+* Lua built with MinGW-64 from [MSYS2](https://www.msys2.org/): follow the [MSYS2 guide](./liblzma-on-windows-for-Lua-MSYS2.md);
+* Lua built with ```gcc``` from [chocolatey](https://chocolatey.org/), [scoop](https://scoop.sh/), [winlibs](https://winlibs.com/), [sourceforge](https://sourceforge.net/projects/mingw/) or [osdn.net](https://osdn.net/projects/mingw/): follow the [generic MinGW / MinGW-64 guide](./liblzma-on-windows-for-Lua-MinGW-MinGW-w64.md).

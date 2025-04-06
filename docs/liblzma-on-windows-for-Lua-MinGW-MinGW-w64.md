@@ -61,14 +61,18 @@ Once you finished the initial steps in the [Requirements](#requirements) section
 
 1. Close any opened instances, and open again the command prompt (```cmd```);
 
-2. Change directory to the temporary directory, create a clean directory to build ```liblzma``` (potentially removing old directories) and change directory to it
+2. Change directory to any folder without spaces (`%SystemDrive%\` will expand to `C:\` if your system was installed at C:), create a clean directory to build ```liblzma``` (potentially removing old directories) and change directory to it
 
     ```cmd
-    cd "%TEMP%"
+    cd "%SystemDrive%\"
     IF EXIST ".\xz\" RMDIR /S /Q ".\xz\"
     mkdir ".\xz\"
     cd ".\xz\"
     ```
+
+> [!WARNING]
+> 
+> Old versions of GNU Make (```mingw32-make```) might fail to build on folders containing spaces in the path. So, play safe.
 
 3. Set a cmd variable to hold the latest ```liblzma``` version (at the time of writing, it is ```5.8.1```). Then, download the source code with ```curl``` and extract it with ```tar```
 
@@ -104,11 +108,13 @@ Once you finished the initial steps in the [Requirements](#requirements) section
         cmake --install liblzma-build-dir --config Release
         ```
 
-6. If ```liblzma``` was built and installed properly, then change directory to the temporary directory again and delete the initial directory created to build the library
+6. If ```liblzma``` was built and installed properly, then change directory to the drive folder again and delete the initial directory created to build the library
 
     ```cmd
-    cd "%TEMP%"
+    cd "%SystemDrive%\"
     IF EXIST ".\xz\" RMDIR /Q /S ".\xz\"
     ```
 
 7. You are ready to install ```lua-xz``` through ```luarocks```.
+
+[Back to docs](../README.md#documentation)
