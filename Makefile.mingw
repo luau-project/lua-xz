@@ -59,6 +59,8 @@ LUA_BINDIR = $(LUA_DIR)/bin
 LUA_INCDIR = $(LUA_DIR)/include
 LUA_LIBDIR = $(LUA_DIR)/lib
 LUA_SHARE = $(LUA_DIR)/share
+LUA_LIB_SUFFIX = $(LUA_SHORT_VERSION)
+LUA_LIB = lua$(LUA_LIB_SUFFIX)
 
 ifneq ($(filter $(LUA_MAJOR_VERSION),1 2 3 4),)
 	$(error Unsupported major version of Lua)
@@ -75,7 +77,6 @@ else
 LUA_LMOD = $(LUA_SHARE)/$(LUA_VERSION)
 LUA_CMOD = $(LUA_LIBDIR)/$(LUA_VERSION)
 endif
-LUA_LIB = lua$(LUA_SHORT_VERSION)
 
 #################################
 # DO NOT edit below             #
