@@ -144,12 +144,12 @@ install-standalone: $(LUA_XZ_OUTPUT_SHARED_LIB) $(LUA_XZ_OUTPUT_STATIC_LIB)
 	@cmd /C IF NOT EXIST "$(subst /,\,$(incdir)/)" $(MKDIR) "$(subst /,\,$(incdir))"
 	@cmd /C IF NOT EXIST "$(subst /,\,$(libdir)/)" $(MKDIR) "$(subst /,\,$(libdir))"
 	@cmd /C IF EXIST "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))" $(RM_F) "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))"
-	@cmd /C FOR %%I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @IF EXIST "$(subst /,\,$(incdir)/%%I)" $(RM_F) "$(subst /,\,$(incdir)/%%I)"
+	@cmd /C FOR %I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @IF EXIST "$(subst /,\,$(incdir)/%I)" $(RM_F) "$(subst /,\,$(incdir)/%I)"
 	@cmd /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))"
 	@cmd /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))"
 	@cmd /C ECHO Installing $(LUA_XZ_NAME) at $(subst /,\,$(prefix))
 	@cmd /C $(INSTALL) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_LIB)) "$(subst /,\,$(bindir)/)"
-	@cmd /C FOR %%I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @$(INSTALL) "%%I" "$(subst /,\,$(incdir)/)"
+	@cmd /C FOR %I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @$(INSTALL) "%I" "$(subst /,\,$(incdir)/)"
 	@cmd /C $(INSTALL) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_IMPLIB)) "$(subst /,\,$(libdir)/)"
 	@cmd /C $(INSTALL) $(subst /,\,$(LUA_XZ_OUTPUT_STATIC_LIB)) "$(subst /,\,$(libdir)/)"
 	@cmd /C ECHO Installation finished successfully.
@@ -168,7 +168,7 @@ uninstall: uninstall-standalone
 
 uninstall-standalone:
 	@cmd /C IF EXIST "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))" $(RM_F) "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))"
-	@cmd /C FOR %%I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @IF EXIST "$(subst /,\,$(incdir)/%%I)" $(RM_F) "$(subst /,\,$(incdir)/%%I)"
+	@cmd /C FOR %I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @IF EXIST "$(subst /,\,$(incdir)/%I)" $(RM_F) "$(subst /,\,$(incdir)/%I)"
 	@cmd /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))"
 	@cmd /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))"
 
@@ -178,7 +178,7 @@ uninstall-module:
 clean: clean-shared clean-static
 
 clean-shared:
-	@cmd /C FOR %%I IN ($(subst /,\,$(LUA_XZ_SHARED_OBJ_FILES)) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_LIB)) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_IMPLIB))) DO @IF EXIST "%%I" $(RM_F) "%%I"
+	@cmd /C FOR %I IN ($(subst /,\,$(LUA_XZ_SHARED_OBJ_FILES)) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_LIB)) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_IMPLIB))) DO @IF EXIST "%I" $(RM_F) "%I"
 
 clean-static:
-	@cmd /C FOR %%I IN ($(subst /,\,$(LUA_XZ_STATIC_OBJ_FILES)) $(subst /,\,$(LUA_XZ_OUTPUT_STATIC_LIB))) DO @IF EXIST "%%I" $(RM_F) "%%I"
+	@cmd /C FOR %I IN ($(subst /,\,$(LUA_XZ_STATIC_OBJ_FILES)) $(subst /,\,$(LUA_XZ_OUTPUT_STATIC_LIB))) DO @IF EXIST "%I" $(RM_F) "%I"
