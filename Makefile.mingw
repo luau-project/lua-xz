@@ -83,6 +83,7 @@ endif
 #################################
 
 # generic settings
+SHELL = $(WINDIR)/System32/cmd.exe
 PERCENT = %
 PERCENT_MOD = $(PERCENT)$(PERCENT)
 OBJ_EXTENSION = o
