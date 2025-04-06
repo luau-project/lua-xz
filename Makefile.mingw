@@ -83,6 +83,7 @@ endif
 #################################
 
 # generic settings
+SHELL = cmd
 OBJ_EXTENSION = o
 SHARED_LIB_EXTENSION = dll
 STATIC_LIB_EXTENSION = a
