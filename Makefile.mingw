@@ -83,6 +83,7 @@ endif
 #################################
 
 # generic settings
+SHELL = cmd
 PERCENT = %
 PERCENT_MOD = $(PERCENT)$(PERCENT)
 OBJ_EXTENSION = o
