@@ -36,5 +36,14 @@ build = {
          incdirs = { "src", "$(LIBLZMA_INCDIR)" },
          libdirs = { "$(LIBLZMA_LIBDIR)" }
       }
+   },
+   platforms = {
+      windows = {
+         modules = {
+            ["lua-xz"] = {
+               defines = { "NDEBUG", "_NDEBUG", "LUA_XZ_BUILD_SHARED" }
+            }
+         }
+      }
    }
 }

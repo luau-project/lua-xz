@@ -13,7 +13,7 @@
 # to embeded lua-xz
 # on your app out of
 # LuaRocks.
-prefix = $(SYSTEMDRIVE)\lua-xz
+prefix = $(SystemDrive)\lua-xz
 bindir = $(prefix)\bin
 incdir = $(prefix)\include
 libdir = $(prefix)\lib
@@ -24,7 +24,7 @@ libdir = $(prefix)\lib
 #     can be edited
 #     to suit your liblzma
 #     installation
-LIBLZMA_DIR = $(SYSTEMDRIVE)\external
+LIBLZMA_DIR = $(SystemDrive)\external
 LIBLZMA_INCDIR = $(LIBLZMA_DIR)\include
 LIBLZMA_LIBDIR = $(LIBLZMA_DIR)\lib
 LIBLZMA_LIB = lzma.$(IMPLIB_EXTENSION)
@@ -36,14 +36,14 @@ LIBLZMA_LIB = lzma.$(IMPLIB_EXTENSION)
 #     to suit your Lua
 #     installation
 LUA_MAJOR_VERSION = 5
-LUA_MINOR_VERSION = 1
+LUA_MINOR_VERSION = 4
 LUA_SHORT_VERSION = $(LUA_MAJOR_VERSION)$(LUA_MINOR_VERSION)
 LUA_VERSION = $(LUA_MAJOR_VERSION).$(LUA_MINOR_VERSION)
 
-# $(SYSTEMDRIVE) is an environment variable
+# $(SystemDrive) is an environment variable
 # that points to the driver letter
 # where the system was installed (e.g.: 'C:')
-LUA_DIR = $(SYSTEMDRIVE)\Lua
+LUA_DIR = $(SystemDrive)\Lua
 LUA_BINDIR = $(LUA_DIR)\bin
 LUA_INCDIR = $(LUA_DIR)\include
 LUA_LIBDIR = $(LUA_DIR)\lib
@@ -82,8 +82,8 @@ LUA_XZ_STATIC_OBJ_FILES = $(LUA_XZ_SRC_DIR)\$(LUA_XZ_NAME)-static.$(OBJ_EXTENSIO
 CC = cl
 CFLAGS = /nologo /c /O2 /W3 /MD
 INCLUDES = /I$(LUA_XZ_SRC_DIR) "/I$(LUA_INCDIR)" "/I$(LIBLZMA_INCDIR)"
-SHARED_DEFINES = /DLUA_XZ_BUILD_SHARED
-STATIC_DEFINES = /DLUA_XZ_BUILD_STATIC
+SHARED_DEFINES = /DNDEBUG /D_NDEBUG /DLUA_XZ_BUILD_SHARED
+STATIC_DEFINES = /DNDEBUG /D_NDEBUG /DLUA_XZ_BUILD_STATIC
 LD = link
 LDFLAGS = /nologo /DLL
 LIBS = "/LIBPATH:$(LUA_LIBDIR)" "/LIBPATH:$(LIBLZMA_LIBDIR)" $(LIBLZMA_LIB) $(LUA_LIB)
