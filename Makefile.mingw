@@ -48,13 +48,22 @@ LUA_BINDIR = $(LUA_DIR)\bin
 LUA_INCDIR = $(LUA_DIR)\include
 LUA_LIBDIR = $(LUA_DIR)\lib
 LUA_SHARE = $(LUA_DIR)\share
-!IF (($(LUA_MAJOR_VERSION)==5) && ($(LUA_MINOR_VERSION)<= 2))
+
+ifneq ($(filter $(LUA_MAJOR_VERSION),1 2 3 4),)
+	$(error Unsupported major version of Lua)
+endif
+
+ifeq ($(LUA_MAJOR_VERSION),5)
+ifneq ($(filter $(LUA_MINOR_VERSION),1 2),)
 LUA_LMOD = $(LUA_BINDIR)\lua
 LUA_CMOD = $(LUA_BINDIR)
-!ELSE
+endif
 LUA_LMOD = $(LUA_SHARE)\$(LUA_VERSION)
 LUA_CMOD = $(LUA_LIBDIR)\$(LUA_VERSION)
-!ENDIF
+else
+LUA_LMOD = $(LUA_SHARE)\$(LUA_VERSION)
+LUA_CMOD = $(LUA_LIBDIR)\$(LUA_VERSION)
+endif
 LUA_LIB = lua$(LUA_SHORT_VERSION)
 
 #################################
