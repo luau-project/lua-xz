@@ -405,9 +405,23 @@ jobs:
 
               Write-Host "Found Lua dll at ${lua_lib}";
 
+              $lua_incdir = Get-ChildItem "${lua_dir}" -Recurse -File |
+                Where-Object Name -EQ "lua.h" |
+                Select-Object -ExpandProperty FullName -First 1 |
+                Split-Path;
+
+              if ($lua_incdir -eq $null -or $lua_incdir -eq "")
+              {
+                $color = (0x1b -as [char]) + "[31m";
+
+                Write-Host "${color}Failed to find the include directory";
+                exit 1;
+              }
+
               mingw32-make "-f" "Makefile.mingw" `
                 "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" `
                 "LUA_DIR=${lua_dir}" `
+                "LUA_INCDIR=${lua_incdir}" `
                 "LUA_LIB=${lua_lib}" `
                 "LUA_MAJOR_VERSION=5" `
                 "LUA_MINOR_VERSION=1" `
@@ -424,6 +438,7 @@ jobs:
               mingw32-make "-f" "Makefile.mingw" `
                 "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" `
                 "LUA_DIR=${lua_dir}" `
+                "LUA_INCDIR=${lua_incdir}" `
                 "LUA_LIB=${lua_lib}" `
                 "LUA_MAJOR_VERSION=5" `
                 "LUA_MINOR_VERSION=1" `
