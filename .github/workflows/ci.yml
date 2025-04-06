@@ -391,15 +391,27 @@ jobs:
           {
             if ("${{ matrix.lua-version }}".StartsWith("luajit"))
             {
-              $lua_lib_fullpath = Get-ChildItem "${lua_dir}" -Recurse -File |
-                Where-Object { $_.FullName.EndsWith(".dll.a") } |
-                Select-Object -ExpandProperty FullName -First 1;
+              $lua_lib = Get-ChildItem "${lua_dir}" -Recurse -File |
+                Where-Object Extension -EQ ".dll" |
+                Select-Object -ExpandProperty BaseName -First 1;
 
-              $lua_lib = [System.IO.Path]::GetFileNameWithoutExtension([System.IO.Path]::GetFileNameWithoutExtension($lua_lib_fullpath));
+              if ($lua_lib -eq $null -or $lua_lib -eq "")
+              {
+                $color = (0x1b -as [char]) + "[31m";
 
-              Write-Host "Found Lua import library at ${lua_lib}";
+                Write-Host "${color}Failed to find Lua dll";
+                exit 1;
+              }
 
-              mingw32-make "-f" "Makefile.mingw" "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" "LUA_DIR=${lua_dir}" "LUA_LIB=${lua_lib}" "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}";
+              Write-Host "Found Lua dll at ${lua_lib}";
+
+              mingw32-make "-f" "Makefile.mingw" `
+                "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" `
+                "LUA_DIR=${lua_dir}" `
+                "LUA_LIB=${lua_lib}" `
+                "LUA_MAJOR_VERSION=5" `
+                "LUA_MINOR_VERSION=1" `
+                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}";
 
               if ($LASTEXITCODE -ne 0)
               {
@@ -409,7 +421,13 @@ jobs:
                 exit 1;
               }
 
-              mingw32-make "-f" "Makefile.mingw" "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" "LUA_DIR=${lua_dir}" "LUA_LIB=${lua_lib}" "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" install;
+              mingw32-make "-f" "Makefile.mingw" `
+                "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" `
+                "LUA_DIR=${lua_dir}" `
+                "LUA_LIB=${lua_lib}" `
+                "LUA_MAJOR_VERSION=5" `
+                "LUA_MINOR_VERSION=1" `
+                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" install;
 
               if ($LASTEXITCODE -ne 0)
               {
@@ -422,12 +440,42 @@ jobs:
             else
             {
               $lua_lib = Get-ChildItem "${lua_dir}" -Recurse -File |
-                Where-Object { $_.FullName.EndsWith(".lib") } |
+                Where-Object Extension -EQ ".lib" |
                 Select-Object -ExpandProperty Name -First 1;
+
+              if ($lua_lib -eq $null -or $lua_lib -eq "")
+              {
+                $color = (0x1b -as [char]) + "[31m";
+
+                Write-Host "${color}Failed to find Lua import library";
+                exit 1;
+              }
 
               Write-Host "Found Lua import library at ${lua_lib}";
 
-              nmake "/F" "Makefile.msvc" "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" "LUA_DIR=${lua_dir}" "LUA_LIB=${lua_lib}" "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}";
+              $lua_major_ver = "";
+              $lua_minor_ver = "";
+
+              if ("${{ matrix.lua-version }}" -match "^(\d+)\.(\d+)$")
+              {
+                $lua_major_ver = $Matches.1;
+                $lua_minor_ver = $Matches.2;
+              }
+              else
+              {
+                $color = (0x1b -as [char]) + "[31m";
+
+                Write-Host "${color}Invalid Lua version format (X.Y) expected";
+                exit 1;
+              }
+
+              nmake "/F" "Makefile.msvc" `
+                "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" `
+                "LUA_DIR=${lua_dir}" `
+                "LUA_LIB=${lua_lib}" `
+                "LUA_MAJOR_VERSION=${lua_major_ver}" `
+                "LUA_MINOR_VERSION=${lua_minor_ver}" `
+                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}";
 
               if ($LASTEXITCODE -ne 0)
               {
@@ -437,7 +485,13 @@ jobs:
                 exit 1;
               }
 
-              nmake "/F" "Makefile.msvc" "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" "LUA_DIR=${lua_dir}" "LUA_LIB=${lua_lib}" "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" install;
+              nmake "/F" "Makefile.msvc" `
+                "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" `
+                "LUA_DIR=${lua_dir}" `
+                "LUA_LIB=${lua_lib}" `
+                "LUA_MAJOR_VERSION=${lua_major_ver}" `
+                "LUA_MINOR_VERSION=${lua_minor_ver}" `
+                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" install;
 
               if ($LASTEXITCODE -ne 0)
               {
