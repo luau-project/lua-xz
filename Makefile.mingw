@@ -67,15 +67,12 @@ ifneq ($(filter $(LUA_MAJOR_VERSION),1 2 3 4),)
 endif
 
 ifeq ($(LUA_MAJOR_VERSION),5)
+LUA_LMOD = $(LUA_SHARE)/lua/$(LUA_VERSION)
+LUA_CMOD = $(LUA_LIBDIR)/lua/$(LUA_VERSION)
 ifneq ($(filter $(LUA_MINOR_VERSION),1 2),)
 LUA_LMOD = $(LUA_BINDIR)/lua
 LUA_CMOD = $(LUA_BINDIR)
 endif
-LUA_LMOD = $(LUA_SHARE)/lua/$(LUA_VERSION)
-LUA_CMOD = $(LUA_LIBDIR)/lua/$(LUA_VERSION)
-else
-LUA_LMOD = $(LUA_SHARE)/lua/$(LUA_VERSION)
-LUA_CMOD = $(LUA_LIBDIR)/lua/$(LUA_VERSION)
 endif
 
 #################################
