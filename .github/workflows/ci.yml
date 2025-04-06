@@ -449,7 +449,7 @@ jobs:
                 "LUA_LIB=${lua_lib}" `
                 "LUA_MAJOR_VERSION=5" `
                 "LUA_MINOR_VERSION=1" `
-                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" ${{ matrix.install-target }};
+                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" ${{ matrix.install-target }} clean;
 
               if ($LASTEXITCODE -ne 0)
               {
@@ -513,7 +513,7 @@ jobs:
                 "LUA_LIB=${lua_lib}" `
                 "LUA_MAJOR_VERSION=${lua_major_ver}" `
                 "LUA_MINOR_VERSION=${lua_minor_ver}" `
-                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" ${{ matrix.install-target }};
+                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" ${{ matrix.install-target }} clean;
 
               if ($LASTEXITCODE -ne 0)
               {
