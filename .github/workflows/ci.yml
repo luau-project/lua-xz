@@ -299,6 +299,10 @@ jobs:
         os:
           - windows-latest
 
+        install-target:
+          - 'install'
+          - 'install-module'
+
     env:
       LUAROCKS_WINDOWS_DEPS_DIR: C:\external
       LIBLZMA_WINDOWS_VERSION: 5.8.1
@@ -387,6 +391,7 @@ jobs:
         working-directory: lua-xz
         run: |
           $lua_dir = Join-Path -Path ${{ github.workspace }} -ChildPath ".lua";
+
           if ("${{ runner.os }}" -eq "Windows")
           {
             if ("${{ matrix.lua-version }}".StartsWith("luajit"))
@@ -403,7 +408,7 @@ jobs:
                 exit 1;
               }
 
-              Write-Host "Found Lua dll at ${lua_lib}";
+              Write-Host "Found Lua dll: ${lua_lib}";
 
               $lua_incdir = Get-ChildItem "${lua_dir}" -Recurse -File |
                 Where-Object Name -EQ "lua.h" |
@@ -417,6 +422,8 @@ jobs:
                 Write-Host "${color}Failed to find the include directory";
                 exit 1;
               }
+
+              Write-Host "Found Lua include directory: ${lua_incdir}";
 
               mingw32-make "-f" "Makefile.mingw" `
                 "LIBLZMA_DIR=${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" `
@@ -442,7 +449,7 @@ jobs:
                 "LUA_LIB=${lua_lib}" `
                 "LUA_MAJOR_VERSION=5" `
                 "LUA_MINOR_VERSION=1" `
-                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" install;
+                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" ${{ matrix.install-target }};
 
               if ($LASTEXITCODE -ne 0)
               {
@@ -466,7 +473,7 @@ jobs:
                 exit 1;
               }
 
-              Write-Host "Found Lua import library at ${lua_lib}";
+              Write-Host "Found Lua import library: ${lua_lib}";
 
               $lua_major_ver = "";
               $lua_minor_ver = "";
@@ -506,7 +513,7 @@ jobs:
                 "LUA_LIB=${lua_lib}" `
                 "LUA_MAJOR_VERSION=${lua_major_ver}" `
                 "LUA_MINOR_VERSION=${lua_minor_ver}" `
-                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" install;
+                "prefix=${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" ${{ matrix.install-target }};
 
               if ($LASTEXITCODE -ne 0)
               {
