@@ -524,16 +524,19 @@ jobs:
               }
             }
 
-            $lua_xz_bin_dir = Join-Path -Path "${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" -ChildPath "bin";
-            if (-not (Test-Path -Path $lua_xz_bin_dir))
+            if ("${{ matrix.install-target }}" -eq "install")
             {
-              $color = (0x1b -as [char]) + "[31m";
+              $lua_xz_bin_dir = Join-Path -Path "${{ env.LUA_XZ_WINDOWS_INSTALL_DIR }}" -ChildPath "bin";
+              if (-not (Test-Path -Path $lua_xz_bin_dir))
+              {
+                $color = (0x1b -as [char]) + "[31m";
 
-              Write-Host "${color}lua-xz was not installed properly";
-              exit 1;
+                Write-Host "${color}lua-xz was not installed properly";
+                exit 1;
+              }
+
+              Add-Content "${{ github.path }}" "${lua_xz_bin_dir}";
             }
-
-            Add-Content "${{ github.path }}" "${lua_xz_bin_dir}";
           }
 
       - name: Run samples
