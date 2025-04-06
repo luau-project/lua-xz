@@ -10,12 +10,12 @@
 # From `cmd':
 
 # 1. Standalone
-#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=path/to/liblmza LUA_DIR=path/to/lua
-#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=path/to/liblmza LUA_DIR=path/to/lua install
+#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua
+#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua install
 
 # 2. Module (like LuaRocks)
-#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=path/to/liblmza LUA_DIR=path/to/lua
-#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=path/to/liblmza LUA_DIR=path/to/lua install-module
+#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua
+#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua install-module
 
 #################################
 # Editable settings             #
