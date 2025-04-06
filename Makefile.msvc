@@ -10,12 +10,12 @@
 # From Visual Studio developer prompt:
 
 # 1. Standalone
-#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua
-#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua install
+#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua LUA_MAJOR_VERSION=5 LUA_MINOR_VERSION=4
+#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua LUA_MAJOR_VERSION=5 LUA_MINOR_VERSION=4 install
 
 # 2. Module (like LuaRocks)
-#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua
-#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua install-module
+#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua LUA_MAJOR_VERSION=5 LUA_MINOR_VERSION=4
+#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua LUA_MAJOR_VERSION=5 LUA_MINOR_VERSION=4 install-module
 
 #################################
 # Editable settings             #
