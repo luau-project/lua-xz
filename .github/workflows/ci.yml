@@ -13,6 +13,8 @@ on:
 env:
   ROCKSPEC_VERSION: 0.0.1
   DEV_ROCKSPEC: lua-xz-dev-1.rockspec
+  LUAROCKS_WINDOWS_DEPS_DIR: C:\external
+  LIBLZMA_WINDOWS_VERSION: 5.8.1
 
 jobs:
 
@@ -304,8 +306,6 @@ jobs:
           - 'install-module'
 
     env:
-      LUAROCKS_WINDOWS_DEPS_DIR: C:\external
-      LIBLZMA_WINDOWS_VERSION: 5.8.1
       LUA_XZ_WINDOWS_INSTALL_DIR: ${{ github.workspace }}\.lua
 
     steps:
@@ -585,8 +585,6 @@ jobs:
           - macos-latest
 
     env:
-      LUAROCKS_WINDOWS_DEPS_DIR: C:\external
-      LIBLZMA_WINDOWS_VERSION: 5.8.1
 
       # use a .tar.xz file
       # released by the Linux kernel team
