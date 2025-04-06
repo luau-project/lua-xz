@@ -1,7 +1,21 @@
 # Build lua-xz on Windows
-# through GNU Make from
-# a usual `cmd' prompt for
+# through GNU Make (mingw32-make) from
+# usual `cmd' prompt for
 # the MinGw / MinGW-w64 toolchain.
+
+#################################
+# Usage                         #
+#################################
+
+# From `cmd':
+
+# 1. Standalone
+#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=path/to/liblmza LUA_DIR=path/to/lua
+#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=path/to/liblmza LUA_DIR=path/to/lua install
+
+# 2. Module (like LuaRocks)
+#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=path/to/liblmza LUA_DIR=path/to/lua
+#     mingw32-make -f Makefile.mingw LIBLZMA_DIR=path/to/liblmza LUA_DIR=path/to/lua install-module
 
 #################################
 # Editable settings             #
@@ -13,6 +27,7 @@
 # to embeded lua-xz
 # on your app out of
 # LuaRocks.
+SystemDrive = C:
 prefix = $(SystemDrive)/lua-xz
 bindir = $(prefix)/bin
 incdir = $(prefix)/include
@@ -39,10 +54,6 @@ LUA_MAJOR_VERSION = 5
 LUA_MINOR_VERSION = 4
 LUA_SHORT_VERSION = $(LUA_MAJOR_VERSION)$(LUA_MINOR_VERSION)
 LUA_VERSION = $(LUA_MAJOR_VERSION).$(LUA_MINOR_VERSION)
-
-# $(SystemDrive) is an environment variable
-# that points to the driver letter
-# where the system was installed (e.g.: 'C:')
 LUA_DIR = $(SystemDrive)/Lua
 LUA_BINDIR = $(LUA_DIR)/bin
 LUA_INCDIR = $(LUA_DIR)/include

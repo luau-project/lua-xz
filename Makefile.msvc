@@ -4,6 +4,20 @@
 # developer prompt.
 
 #################################
+# Usage                         #
+#################################
+
+# From Visual Studio developer prompt:
+
+# 1. Standalone
+#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua
+#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua install
+
+# 2. Module (like LuaRocks)
+#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua
+#     nmake /F Makefile.msvc LIBLZMA_DIR=C:\path\to\liblmza LUA_DIR=C:\path\to\lua install-module
+
+#################################
 # Editable settings             #
 #################################
 
@@ -13,7 +27,8 @@
 # to embeded lua-xz
 # on your app out of
 # LuaRocks.
-prefix = $(SystemDrive)\lua-xz
+SYSTEMDRIVE = C:
+prefix = $(SYSTEMDRIVE)\lua-xz
 bindir = $(prefix)\bin
 incdir = $(prefix)\include
 libdir = $(prefix)\lib
@@ -24,7 +39,7 @@ libdir = $(prefix)\lib
 #     can be edited
 #     to suit your liblzma
 #     installation
-LIBLZMA_DIR = $(SystemDrive)\external
+LIBLZMA_DIR = $(SYSTEMDRIVE)\external
 LIBLZMA_INCDIR = $(LIBLZMA_DIR)\include
 LIBLZMA_LIBDIR = $(LIBLZMA_DIR)\lib
 LIBLZMA_LIB = lzma.$(IMPLIB_EXTENSION)
@@ -39,11 +54,7 @@ LUA_MAJOR_VERSION = 5
 LUA_MINOR_VERSION = 4
 LUA_SHORT_VERSION = $(LUA_MAJOR_VERSION)$(LUA_MINOR_VERSION)
 LUA_VERSION = $(LUA_MAJOR_VERSION).$(LUA_MINOR_VERSION)
-
-# $(SystemDrive) is an environment variable
-# that points to the driver letter
-# where the system was installed (e.g.: 'C:')
-LUA_DIR = $(SystemDrive)\Lua
+LUA_DIR = $(SYSTEMDRIVE)\Lua
 LUA_BINDIR = $(LUA_DIR)\bin
 LUA_INCDIR = $(LUA_DIR)\include
 LUA_LIBDIR = $(LUA_DIR)\lib
@@ -117,10 +128,10 @@ install-standalone: $(LUA_XZ_OUTPUT_SHARED_LIB) $(LUA_XZ_OUTPUT_STATIC_LIB)
 	@IF NOT EXIST "$(bindir)\" @$(MKDIR) "$(bindir)"
 	@IF NOT EXIST "$(incdir)\" @$(MKDIR) "$(incdir)"
 	@IF NOT EXIST "$(libdir)\" @$(MKDIR) "$(libdir)"
-	@IF EXIST "$(bindir)\$(LUA_XZ_OUTPUT_SHARED_LIB)" @$(RM_F) "$(bindir)\$(LUA_XZ_OUTPUT_SHARED_LIB)"
-	@IF EXIST "$(incdir)\$(LUA_XZ_HEADER_NAME)" @$(RM_F) "$(incdir)\$(LUA_XZ_HEADER_NAME)"
-	@IF EXIST "$(libdir)\$(LUA_XZ_OUTPUT_SHARED_IMPLIB)" @$(RM_F) "$(libdir)\$(LUA_XZ_OUTPUT_SHARED_IMPLIB)"
-	@IF EXIST "$(libdir)\$(LUA_XZ_OUTPUT_STATIC_LIB)" @$(RM_F) "$(libdir)\$(LUA_XZ_OUTPUT_STATIC_LIB)"
+	@IF EXIST "$(bindir)\$(LUA_XZ_OUTPUT_SHARED_LIB)" $(RM_F) "$(bindir)\$(LUA_XZ_OUTPUT_SHARED_LIB)"
+	@FOR %I IN ($(LUA_XZ_HEADER_FILES)) DO @IF EXIST "$(incdir)\%I" $(RM_F) "$(incdir)\%I"
+	@IF EXIST "$(libdir)\$(LUA_XZ_OUTPUT_SHARED_IMPLIB)" $(RM_F) "$(libdir)\$(LUA_XZ_OUTPUT_SHARED_IMPLIB)"
+	@IF EXIST "$(libdir)\$(LUA_XZ_OUTPUT_STATIC_LIB)" $(RM_F) "$(libdir)\$(LUA_XZ_OUTPUT_STATIC_LIB)"
 	@ECHO Installing $(LUA_XZ_NAME) at $(prefix)
 	@$(INSTALL) $(LUA_XZ_OUTPUT_SHARED_LIB) "$(bindir)\"
 	@FOR %I IN ($(LUA_XZ_HEADER_FILES)) DO @$(INSTALL) $(LUA_XZ_HEADER_FILES) "$(incdir)\"
@@ -133,15 +144,26 @@ install-module: $(LUA_XZ_OUTPUT_SHARED_LIB) $(LUA_XZ_OUTPUT_STATIC_LIB)
 	@IF NOT EXIST "$(LUA_BINDIR)\" @$(MKDIR) "$(LUA_BINDIR)"
 	@IF NOT EXIST "$(LUA_LIBDIR)\" @$(MKDIR) "$(LUA_LIBDIR)"
 	@IF NOT EXIST "$(LUA_CMOD)\" @$(MKDIR) "$(LUA_CMOD)"
-	@IF EXIST "$(LUA_CMOD)\$(LUA_XZ_OUTPUT_SHARED_LIB)" @$(RM_F) "$(LUA_CMOD)\$(LUA_XZ_OUTPUT_SHARED_LIB)"
+	@IF EXIST "$(LUA_CMOD)\$(LUA_XZ_OUTPUT_SHARED_LIB)" $(RM_F) "$(LUA_CMOD)\$(LUA_XZ_OUTPUT_SHARED_LIB)"
 	@ECHO Installing $(LUA_XZ_NAME) at $(LUA_CMOD)
 	@$(INSTALL) $(LUA_XZ_OUTPUT_SHARED_LIB) "$(LUA_CMOD)\"
 	@ECHO Installation finished successfully.
 
+uninstall: uninstall-standalone
+
+uninstall-standalone:
+	@IF EXIST "$(bindir)\$(LUA_XZ_OUTPUT_SHARED_LIB)" $(RM_F) "$(bindir)\$(LUA_XZ_OUTPUT_SHARED_LIB)"
+	@FOR %I IN ($(LUA_XZ_HEADER_FILES)) DO @IF EXIST "$(incdir)\%I" $(RM_F) "$(incdir)\%I"
+	@IF EXIST "$(libdir)\$(LUA_XZ_OUTPUT_SHARED_IMPLIB)" $(RM_F) "$(libdir)\$(LUA_XZ_OUTPUT_SHARED_IMPLIB)"
+	@IF EXIST "$(libdir)\$(LUA_XZ_OUTPUT_STATIC_LIB)" $(RM_F) "$(libdir)\$(LUA_XZ_OUTPUT_STATIC_LIB)"
+
+uninstall-module:
+	@IF EXIST "$(LUA_CMOD)\$(LUA_XZ_OUTPUT_SHARED_LIB)" $(RM_F) "$(LUA_CMOD)\$(LUA_XZ_OUTPUT_SHARED_LIB)"
+
 clean: clean-shared clean-static
 
 clean-shared:
-	@FOR %I IN ($(LUA_XZ_SHARED_OBJ_FILES) $(LUA_XZ_OUTPUT_SHARED_LIB) $(LUA_XZ_OUTPUT_SHARED_IMPLIB) $(LUA_XZ_OUTPUT_SHARED_EXP)) DO @IF EXIST %I @$(RM_F) %I
+	@FOR %I IN ($(LUA_XZ_SHARED_OBJ_FILES) $(LUA_XZ_OUTPUT_SHARED_LIB) $(LUA_XZ_OUTPUT_SHARED_IMPLIB) $(LUA_XZ_OUTPUT_SHARED_EXP)) DO @IF EXIST %I $(RM_F) %I
 
 clean-static:
-	@FOR %I IN ($(LUA_XZ_STATIC_OBJ_FILES) $(LUA_XZ_OUTPUT_STATIC_LIB)) DO @IF EXIST %I @$(RM_F) %I
+	@FOR %I IN ($(LUA_XZ_STATIC_OBJ_FILES) $(LUA_XZ_OUTPUT_STATIC_LIB)) DO @IF EXIST %I $(RM_F) %I

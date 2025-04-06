@@ -32,18 +32,9 @@ build = {
       ["lua-xz"] = {
          sources = { "src/lua-xz.c" },
          libraries = { "lzma" },
-         defines = { "LUA_XZ_BUILD_SHARED" },
+         defines = { "NDEBUG", "_NDEBUG", "LUA_XZ_BUILD_SHARED" },
          incdirs = { "src", "$(LIBLZMA_INCDIR)" },
          libdirs = { "$(LIBLZMA_LIBDIR)" }
-      }
-   },
-   platforms = {
-      windows = {
-         modules = {
-            ["lua-xz"] = {
-               defines = { "NDEBUG", "_NDEBUG", "LUA_XZ_BUILD_SHARED" }
-            }
-         }
       }
    }
 }
