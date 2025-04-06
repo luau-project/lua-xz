@@ -28,3 +28,5 @@ In short, we provide two manners to build and install `liblzma` + `lua-xz`
 * Lua built with MSVC toolchain: follow the [MSVC guide](./liblzma-on-windows-for-Lua-MSVC.md);
 * Lua built with MinGW-64 from [MSYS2](https://www.msys2.org/): follow the [MSYS2 guide](./liblzma-on-windows-for-Lua-MSYS2.md);
 * Lua built with ```gcc``` from [chocolatey](https://chocolatey.org/), [scoop](https://scoop.sh/), [winlibs](https://winlibs.com/), [sourceforge](https://sourceforge.net/projects/mingw/) or [osdn.net](https://osdn.net/projects/mingw/): follow the [generic MinGW / MinGW-64 guide](./liblzma-on-windows-for-Lua-MinGW-MinGW-w64.md).
+
+[Back to home](../)

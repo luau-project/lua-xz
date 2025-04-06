@@ -23,4 +23,4 @@ The easiest way to acquire ```liblzma``` on any MSYS2 environment for MinGW-w64 
 
 3. You are ready to install ```lua-xz``` through ```luarocks```.
 
-[Back to docs](../README.md#documentation)
+[Back to docs](./README.md#documentation)

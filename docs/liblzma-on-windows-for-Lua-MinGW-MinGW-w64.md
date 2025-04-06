@@ -117,4 +117,4 @@ Once you finished the initial steps in the [Requirements](#requirements) section
 
 7. You are ready to install ```lua-xz``` through ```luarocks```.
 
-[Back to docs](../README.md#documentation)
+[Back to docs](./README.md#documentation)
