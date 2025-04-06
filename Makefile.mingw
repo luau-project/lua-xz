@@ -83,9 +83,8 @@ endif
 #################################
 
 # generic settings
-SHELL = cmd
 PERCENT = %
-PERCENT_MOD = $(PERCENT)
+PERCENT_MOD = $(PERCENT)$(PERCENT)
 OBJ_EXTENSION = o
 SHARED_LIB_EXTENSION = dll
 STATIC_LIB_EXTENSION = a
@@ -141,46 +140,46 @@ $(LUA_XZ_STATIC_OBJ_FILES): $(LUA_XZ_SRC_FILES)
 install: install-standalone
 
 install-standalone: $(LUA_XZ_OUTPUT_SHARED_LIB) $(LUA_XZ_OUTPUT_STATIC_LIB)
-	@cmd /C IF NOT EXIST "$(subst /,\,$(prefix)/)" $(MKDIR) "$(subst /,\,$(prefix))"
-	@cmd /C IF NOT EXIST "$(subst /,\,$(bindir)/)" $(MKDIR) "$(subst /,\,$(bindir))"
-	@cmd /C IF NOT EXIST "$(subst /,\,$(incdir)/)" $(MKDIR) "$(subst /,\,$(incdir))"
-	@cmd /C IF NOT EXIST "$(subst /,\,$(libdir)/)" $(MKDIR) "$(subst /,\,$(libdir))"
-	@cmd /C IF EXIST "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))" $(RM_F) "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))"
-	@cmd /C FOR $(PERCENT_MOD)I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @IF EXIST "$(subst /,\,$(incdir)/$(PERCENT_MOD)I)" $(RM_F) "$(subst /,\,$(incdir)/$(PERCENT_MOD)I)"
-	@cmd /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))"
-	@cmd /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))"
-	@cmd /C ECHO Installing $(LUA_XZ_NAME) at $(subst /,\,$(prefix))
-	@cmd /C $(INSTALL) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_LIB)) "$(subst /,\,$(bindir)/)"
-	@cmd /C FOR $(PERCENT_MOD)I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @$(INSTALL) "$(PERCENT_MOD)I" "$(subst /,\,$(incdir)/)"
-	@cmd /C $(INSTALL) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_IMPLIB)) "$(subst /,\,$(libdir)/)"
-	@cmd /C $(INSTALL) $(subst /,\,$(LUA_XZ_OUTPUT_STATIC_LIB)) "$(subst /,\,$(libdir)/)"
-	@cmd /C ECHO Installation finished successfully.
+	@cmd /E:OFF /C IF NOT EXIST "$(subst /,\,$(prefix)/)" $(MKDIR) "$(subst /,\,$(prefix))"
+	@cmd /E:OFF /C IF NOT EXIST "$(subst /,\,$(bindir)/)" $(MKDIR) "$(subst /,\,$(bindir))"
+	@cmd /E:OFF /C IF NOT EXIST "$(subst /,\,$(incdir)/)" $(MKDIR) "$(subst /,\,$(incdir))"
+	@cmd /E:OFF /C IF NOT EXIST "$(subst /,\,$(libdir)/)" $(MKDIR) "$(subst /,\,$(libdir))"
+	@cmd /E:OFF /C IF EXIST "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))" $(RM_F) "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))"
+	@cmd /E:OFF /C FOR $(PERCENT_MOD)I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @IF EXIST "$(subst /,\,$(incdir)/$(PERCENT_MOD)I)" $(RM_F) "$(subst /,\,$(incdir)/$(PERCENT_MOD)I)"
+	@cmd /E:OFF /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))"
+	@cmd /E:OFF /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))"
+	@cmd /E:OFF /C ECHO Installing $(LUA_XZ_NAME) at $(subst /,\,$(prefix))
+	@cmd /E:OFF /C $(INSTALL) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_LIB)) "$(subst /,\,$(bindir)/)"
+	@cmd /E:OFF /C FOR $(PERCENT_MOD)I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @$(INSTALL) "$(PERCENT_MOD)I" "$(subst /,\,$(incdir)/)"
+	@cmd /E:OFF /C $(INSTALL) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_IMPLIB)) "$(subst /,\,$(libdir)/)"
+	@cmd /E:OFF /C $(INSTALL) $(subst /,\,$(LUA_XZ_OUTPUT_STATIC_LIB)) "$(subst /,\,$(libdir)/)"
+	@cmd /E:OFF /C ECHO Installation finished successfully.
 
 install-module: $(LUA_XZ_OUTPUT_SHARED_LIB) $(LUA_XZ_OUTPUT_STATIC_LIB)
-	@cmd /C IF NOT EXIST "$(subst /,\,$(LUA_DIR)/)" $(MKDIR) "$(subst /,\,$(LUA_DIR))"
-	@cmd /C IF NOT EXIST "$(subst /,\,$(LUA_BINDIR)/)" $(MKDIR) "$(subst /,\,$(LUA_BINDIR))"
-	@cmd /C IF NOT EXIST "$(subst /,\,$(LUA_LIBDIR)/)" $(MKDIR) "$(subst /,\,$(LUA_LIBDIR))"
-	@cmd /C IF NOT EXIST "$(subst /,\,$(LUA_CMOD)/)" $(MKDIR) "$(subst /,\,$(LUA_CMOD))"
-	@cmd /C IF EXIST "$(subst /,\,$(LUA_CMOD)/$(LUA_XZ_OUTPUT_SHARED_LIB))" $(RM_F) "$(subst /,\,$(LUA_CMOD)/$(LUA_XZ_OUTPUT_SHARED_LIB))"
-	@cmd /C ECHO Installing $(subst /,\,$(LUA_XZ_NAME)) at $(subst /,\,$(LUA_CMOD))
-	@cmd /C $(INSTALL) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_LIB)) "$(subst /,\,$(LUA_CMOD)/)"
-	@cmd /C ECHO Installation finished successfully.
+	@cmd /E:OFF /C IF NOT EXIST "$(subst /,\,$(LUA_DIR)/)" $(MKDIR) "$(subst /,\,$(LUA_DIR))"
+	@cmd /E:OFF /C IF NOT EXIST "$(subst /,\,$(LUA_BINDIR)/)" $(MKDIR) "$(subst /,\,$(LUA_BINDIR))"
+	@cmd /E:OFF /C IF NOT EXIST "$(subst /,\,$(LUA_LIBDIR)/)" $(MKDIR) "$(subst /,\,$(LUA_LIBDIR))"
+	@cmd /E:OFF /C IF NOT EXIST "$(subst /,\,$(LUA_CMOD)/)" $(MKDIR) "$(subst /,\,$(LUA_CMOD))"
+	@cmd /E:OFF /C IF EXIST "$(subst /,\,$(LUA_CMOD)/$(LUA_XZ_OUTPUT_SHARED_LIB))" $(RM_F) "$(subst /,\,$(LUA_CMOD)/$(LUA_XZ_OUTPUT_SHARED_LIB))"
+	@cmd /E:OFF /C ECHO Installing $(subst /,\,$(LUA_XZ_NAME)) at $(subst /,\,$(LUA_CMOD))
+	@cmd /E:OFF /C $(INSTALL) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_LIB)) "$(subst /,\,$(LUA_CMOD)/)"
+	@cmd /E:OFF /C ECHO Installation finished successfully.
 
 uninstall: uninstall-standalone
 
 uninstall-standalone:
-	@cmd /C IF EXIST "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))" $(RM_F) "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))"
-	@cmd /C FOR $(PERCENT_MOD)I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @IF EXIST "$(subst /,\,$(incdir)/$(PERCENT_MOD)I)" $(RM_F) "$(subst /,\,$(incdir)/$(PERCENT_MOD)I)"
-	@cmd /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))"
-	@cmd /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))"
+	@cmd /E:OFF /C IF EXIST "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))" $(RM_F) "$(subst /,\,$(bindir)/$(LUA_XZ_OUTPUT_SHARED_LIB))"
+	@cmd /E:OFF /C FOR $(PERCENT_MOD)I IN ($(subst /,\,$(LUA_XZ_HEADER_FILES))) DO @IF EXIST "$(subst /,\,$(incdir)/$(PERCENT_MOD)I)" $(RM_F) "$(subst /,\,$(incdir)/$(PERCENT_MOD)I)"
+	@cmd /E:OFF /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_SHARED_IMPLIB))"
+	@cmd /E:OFF /C IF EXIST "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))" $(RM_F) "$(subst /,\,$(libdir)/$(LUA_XZ_OUTPUT_STATIC_LIB))"
 
 uninstall-module:
-	@cmd /C IF EXIST "$(subst /,\,$(LUA_CMOD)/$(LUA_XZ_OUTPUT_SHARED_LIB))" $(RM_F) "$(subst /,\,$(LUA_CMOD)/$(LUA_XZ_OUTPUT_SHARED_LIB))"
+	@cmd /E:OFF /C IF EXIST "$(subst /,\,$(LUA_CMOD)/$(LUA_XZ_OUTPUT_SHARED_LIB))" $(RM_F) "$(subst /,\,$(LUA_CMOD)/$(LUA_XZ_OUTPUT_SHARED_LIB))"
 
 clean: clean-shared clean-static
 
 clean-shared:
-	@cmd /C FOR $(PERCENT_MOD)I IN ($(subst /,\,$(LUA_XZ_SHARED_OBJ_FILES)) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_LIB)) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_IMPLIB))) DO @IF EXIST "$(PERCENT_MOD)I" $(RM_F) "$(PERCENT_MOD)I"
+	@cmd /E:OFF /C FOR $(PERCENT_MOD)I IN ($(subst /,\,$(LUA_XZ_SHARED_OBJ_FILES)) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_LIB)) $(subst /,\,$(LUA_XZ_OUTPUT_SHARED_IMPLIB))) DO @IF EXIST "$(PERCENT_MOD)I" $(RM_F) "$(PERCENT_MOD)I"
 
 clean-static:
-	@cmd /C FOR $(PERCENT_MOD)I IN ($(subst /,\,$(LUA_XZ_STATIC_OBJ_FILES)) $(subst /,\,$(LUA_XZ_OUTPUT_STATIC_LIB))) DO @IF EXIST "$(PERCENT_MOD)I" $(RM_F) "$(PERCENT_MOD)I"
+	@cmd /E:OFF /C FOR $(PERCENT_MOD)I IN ($(subst /,\,$(LUA_XZ_STATIC_OBJ_FILES)) $(subst /,\,$(LUA_XZ_OUTPUT_STATIC_LIB))) DO @IF EXIST "$(PERCENT_MOD)I" $(RM_F) "$(PERCENT_MOD)I"
