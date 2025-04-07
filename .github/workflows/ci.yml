@@ -763,8 +763,6 @@ jobs:
             {
               sudo apt install -y lua${{ matrix.lua-version }} liblua${{ matrix.lua-version }}-dev;
             }
-
-            sudo ln -s /usr/bin/lua${{ matrix.lua-version }} /usr/bin/lua
           }
 
       - name: Fix the name of LuaJIT executable on Windows

@@ -4,6 +4,22 @@ set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type.")
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build a shared library.")
 set(BUILD_STATIC_LIBS ON CACHE BOOL "Build a static library.")
 
+if (NOT DEFINED STANDALONE)
+    if (UNIX)
+        set(STANDALONE OFF)
+    else()
+        set(STANDALONE ON)
+    endif()
+endif()
+
+if (NOT BUILD_SHARED_LIBS AND NOT STANDALONE)
+    message(FATAL_ERROR "In order to install as a Lua module, BUILD_SHARED_LIBS must be turned on.")
+endif()
+
+if (BUILD_STATIC_LIBS AND NOT STANDALONE)
+    message(WARNING "The static library will not be installed on non-standalone installation mode.")
+endif()
+
 if (NOT DEFINED LUA_XZ_BUILD_TESTS)
     set(LUA_XZ_BUILD_TESTS "${BUILD_TESTING}")
 endif()
@@ -281,12 +297,30 @@ endforeach()
 
 install(FILES "${LUA_XZ_LICENSE}" DESTINATION "${CMAKE_INSTALL_DOCDIR}")
 
-install(TARGETS ${_targets_to_install}
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-)
+if (STANDALONE)
+    install(TARGETS ${_targets_to_install}
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    )
+else()
+    if (UNIX)
+        if (_IS_LUAJIT)
+            set(_cmod "${CMAKE_INSTALL_LIBDIR}/lua/5.1")
+        else()
+            set(_cmod "${CMAKE_INSTALL_LIBDIR}/lua/${LUA_VERSION_MAJOR}.${LUA_VERSION_MINOR}")
+        endif()
+    else()
+        if (_IS_LUAJIT OR "${LUA_VERSION_MAJOR}.${LUA_VERSION_MINOR}" STREQUAL "5.1" OR "${LUA_VERSION_MAJOR}.${LUA_VERSION_MINOR}" STREQUAL "5.2")
+            set(_cmod "${CMAKE_INSTALL_BINDIR}")
+        else()
+            set(_cmod "${CMAKE_INSTALL_LIBDIR}/lua/${LUA_VERSION_MAJOR}.${LUA_VERSION_MINOR}")
+        endif()
+    endif()
+
+    install(TARGETS "${LUA_XZ_SHARED}" RUNTIME DESTINATION "${_cmod}")
+endif()
 
 message(STATUS "")
 message(STATUS "")
@@ -325,9 +359,13 @@ message(STATUS " ")
 message(STATUS "   Install directories:")
 message(STATUS " ")
 message(STATUS "     Install prefix .................. : ${CMAKE_INSTALL_PREFIX}")
+if (STANDALONE)
 message(STATUS "     Binary dir ...................... : ${CMAKE_INSTALL_BINDIR}")
 message(STATUS "     Lib dir ......................... : ${CMAKE_INSTALL_LIBDIR}")
 message(STATUS "     Include dir ..................... : ${CMAKE_INSTALL_INCLUDEDIR}")
 message(STATUS "     Doc dir ......................... : ${CMAKE_INSTALL_DOCDIR}")
+else()
+message(STATUS "     Binary dir ...................... : ${_cmod}")
+endif()
 message(STATUS "")
 message(STATUS "")
