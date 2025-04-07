@@ -88,7 +88,11 @@ if (DEFINED LUA_VERSION)
             endif()
         endforeach()
 
-        find_library(LuaJIT_LIBRARY NAMES luajit luajit-5.1 PATHS "${LuaJIT_DIR}" REQUIRED)
+        if (WIN32)
+            find_library(LuaJIT_LIBRARY NAMES luajit luajit-5.1 lua51 lua5.1 lua-5.1 PATHS "${LuaJIT_DIR}" REQUIRED)
+        else()
+            find_library(LuaJIT_LIBRARY NAMES luajit luajit-5.1 PATHS "${LuaJIT_DIR}" REQUIRED)
+        endif()
 
         # LuaJIT_LIBRARY must share the same LuaJIT_DIR base directory
         get_filename_component(__LuaJIT_PARENT_LIBRARY_DIRS "${LuaJIT_LIBRARY}" PATH)
