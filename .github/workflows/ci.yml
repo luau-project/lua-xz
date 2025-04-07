@@ -761,6 +761,24 @@ jobs:
         with:
           luaVersion: ${{ matrix.lua-version }}
 
+      - name: Fix LuaJIT name executable on Windows
+        if: ${{ runner.os == 'Windows' && startsWith(matrix.lua-version, 'luajit') }}
+        run: |
+          $luajit = Join-Path -Path "${{ github.workspace }}" -ChildPath "bin" |
+            "luajit";
+
+          if (Test-Path -Path "${luajit}")
+          {
+            Copy-Item -Path "${luajit}" -Destination "${luajit}.exe";
+          }
+          else
+          {
+            $color = (0x1b -as [char]) + "[31m";
+
+            Write-Host "${color}LuaJIT not found";
+            exit 1;
+          }
+
       - name: Make Lua discoverable by CMake
         if: ${{ matrix.build-system == 'cmake' }}
         run: |
