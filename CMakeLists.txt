@@ -217,11 +217,16 @@ set(_targets_to_install)
 # Enable @rpath in the install name
 set(CMAKE_MACOSX_RPATH ON)
 
+STRING(TOUPPER "${CMAKE_BUILD_TYPE}" _BUILD_TYPE_UPPER)
+
 foreach(kind "SHARED" "STATIC")
     if (BUILD_${kind}_LIBS)
         set(_target_kind ${LUA_XZ_${kind}})
         add_library(${_target_kind} ${kind} ${LUA_XZ_SOURCES})
         target_include_directories(${_target_kind} PRIVATE ${LUA_INCLUDE_DIR} ${LIBLZMA_INCLUDE_DIRS})
+        if ("${_BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
+            target_compile_definitions(${_target_kind} PRIVATE "NDEBUG" "_NDEBUG")
+        endif()
         target_compile_definitions(${_target_kind} PRIVATE "LUA_XZ_BUILD_${kind}")
         if (${kind} STREQUAL "SHARED")
             if (WIN32)
