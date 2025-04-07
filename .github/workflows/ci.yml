@@ -753,7 +753,7 @@ jobs:
             sudo apt install -y luajit libluajit-5.1-dev;
             sudo ln -s /usr/bin/luajit /usr/bin/lua
           }
-          else if (-not ("${{ matrix.lua-version }}".StartsWith("luajit")))
+          elseif (-not ("${{ matrix.lua-version }}".StartsWith("luajit")))
           {
             if ("${{ matrix.lua-version }}" -eq "5.1")
             {
