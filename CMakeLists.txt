@@ -89,7 +89,17 @@ if (DEFINED LUA_VERSION)
         endforeach()
 
         if (WIN32)
-            find_library(LuaJIT_LIBRARY NAMES luajit luajit-5.1 lua51 lua5.1 lua-5.1 PATHS "${LuaJIT_DIR}" REQUIRED)
+            if (MINGW)
+                # MinGW / MinGW-w64 can link libraries
+                # by feeding the DLL to the linker
+                find_library(LuaJIT_LIBRARY NAMES luajit luajit-5.1 lua51 lua5.1 lua-5.1 PATHS "${LuaJIT_DIR}")
+
+                if (NOT LuaJIT_LIBRARY)
+                    find_file(LuaJIT_LIBRARY NAMES lua51.dll lua5.1.dll lua-5.1.dll PATHS "${LuaJIT_DIR}" REQUIRED)
+                endif()
+            else()
+                find_library(LuaJIT_LIBRARY NAMES luajit luajit-5.1 lua51 lua5.1 lua-5.1 PATHS "${LuaJIT_DIR}" REQUIRED)
+            endif()
         else()
             find_library(LuaJIT_LIBRARY NAMES luajit luajit-5.1 PATHS "${LuaJIT_DIR}" REQUIRED)
         endif()
