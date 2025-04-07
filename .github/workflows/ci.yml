@@ -865,17 +865,7 @@ jobs:
 
       - name: Test lua-xz (cmake)
         if: ${{ matrix.build-system == 'cmake' }}
-        run: |
-          ctest --test-dir "${{ env.LUA_XZ_BUILD_DIR }}" -C Release;
-
-          if ($LASTEXITCODE -ne 0)
-          {
-            $log = Join-Path -Path "${{ env.LUA_XZ_BUILD_DIR }}" -ChildPath "Testing" |
-              Join-Path -ChildPath "Temporary" |
-              Join-Path -ChildPath "LastTest.log";
-
-            Write-Host (Get-Content $log);
-          }
+        run: ctest --test-dir "${{ env.LUA_XZ_BUILD_DIR }}" -C Release;
 
       - name: Install lua-xz (cmake)
         if: ${{ matrix.build-system == 'cmake' }}
@@ -884,14 +874,29 @@ jobs:
           {
             cmake --install "${{ env.LUA_XZ_BUILD_DIR }}" --config Release;
           }
-          else
+          elseif ("${{ runner.os }}" -eq "Linux")
           {
             sudo cmake --install "${{ env.LUA_XZ_BUILD_DIR }}" --config Release;
-
-            if ("${{ runner.os }}" -eq "Linux")
+            sudo ldconfig;
+          }
+          else
+          {
+            cmake --install "${{ env.LUA_XZ_BUILD_DIR }}" --config Release;
+            if ("${{ matrix.lua-version }}".StartsWith("luajit"))
             {
-              sudo ldconfig;
+              $lua_cpath = Join-Path -Path "${{ github.workspace }}" -ChildPath ".lua" |
+                Join-Path -ChildPath "lib" |
+                Join-Path -ChildPath "lua" |
+                Join-Path -ChildPath "5.1";
             }
+            else
+            {
+              $lua_cpath = Join-Path -Path "${{ github.workspace }}" -ChildPath ".lua" |
+                Join-Path -ChildPath "lib" |
+                Join-Path -ChildPath "lua" |
+                Join-Path -ChildPath "${{ matrix.lua-version }}";
+            }
+            Add-Content "${{ github.env }}" "LUA_CPATH=${lua_cpath}/?.so;;";
           }
 
       - name: Build lua-xz (luarocks)
