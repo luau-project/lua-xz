@@ -764,8 +764,9 @@ jobs:
       - name: Fix LuaJIT name executable on Windows
         if: ${{ runner.os == 'Windows' && startsWith(matrix.lua-version, 'luajit') }}
         run: |
-          $luajit = Join-Path -Path "${{ github.workspace }}" -ChildPath "bin" |
-            "luajit";
+          $luajit = Join-Path -Path "${{ github.workspace }}" -ChildPath ".lua" |
+            Join-Path -ChildPath "bin" |
+            Join-Path -ChildPath "luajit";
 
           if (Test-Path -Path "${luajit}")
           {
