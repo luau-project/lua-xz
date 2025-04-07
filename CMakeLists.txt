@@ -158,7 +158,7 @@ endif()
 if (LUA_XZ_BUILD_TESTS AND NOT _IS_LUAJIT)
     # Getting the interpreter for tests
     if (LUA_XZ_BUILD_TESTS)
-        find_program(Lua_INTERPRETER
+        find_program(LUA_INTERPRETER
             NAMES
                 "lua${LUA_VERSION_MAJOR}${LUA_VERSION_MINOR}"
                 "lua${LUA_VERSION_MAJOR}.${LUA_VERSION_MINOR}"
@@ -167,7 +167,7 @@ if (LUA_XZ_BUILD_TESTS AND NOT _IS_LUAJIT)
                 "lua"
             REQUIRED)
 
-        get_filename_component(Lua_DIR "${Lua_INTERPRETER}" PATH)
+        get_filename_component(Lua_DIR "${LUA_INTERPRETER}" PATH)
         get_filename_component(Lua_DIR "${Lua_DIR}" PATH)
 
         set(_guessed_lua_incdirs
@@ -223,7 +223,7 @@ foreach(kind "SHARED" "STATIC")
                 foreach(t ${LUA_XZ_TESTS_SOURCES})
                     get_filename_component(tn "${t}" NAME_WE)
                     add_test(NAME "${tn}"
-                        COMMAND "${Lua_INTERPRETER}" "${t}"
+                        COMMAND "${LUA_INTERPRETER}" "${t}"
                         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
                 endforeach()
             endif()
@@ -259,6 +259,9 @@ else()
 message(STATUS "     Lua (${LUA_VERSION}):")
 endif()
 message(STATUS "")
+if (LUA_XZ_BUILD_TESTS)
+message(STATUS "       Interpreter ................... : ${LUA_INTERPRETER}")
+endif()
 message(STATUS "       Libraries ..................... : ${LUA_LIBRARIES}")
 message(STATUS "       Include dirs .................. : ${LUA_INCLUDE_DIR}")
 message(STATUS "")
