@@ -214,9 +214,7 @@ find_package(LibLZMA 5.0.0 REQUIRED)
 # liblzma to the system PATH
 # environment variable
 if (WIN32 AND LUA_XZ_BUILD_TESTS)
-    
     get_filename_component(_LIBLZMA_DIR "${LIBLZMA_INCLUDE_DIR}" PATH)
-    get_filename_component(_LIBLZMA_DIR "${_LIBLZMA_DIR}" PATH)
 
     set(LIBLZMA_BINDIR "${_LIBLZMA_DIR}/bin")
     if (NOT IS_DIRECTORY "${LIBLZMA_BINDIR}")

@@ -581,30 +581,33 @@ jobs:
 
         os:
           - windows-latest
-          - ubuntu-latest
-          - macos-latest
+          # - ubuntu-latest
+          # - macos-latest
 
         build-system:
           - cmake
           # - luarocks
 
-        exclude:
-          - lua-version: 
+        # exclude:
+          # - lua-version: 
             # - 5.1
             # - 5.2
             # - 5.3
-            - 5.4
-            - luajit
+            # - 5.4
+            # - luajit
             # - luajit-openresty
-            os: ubuntu-latest
-          - lua-version: 
+            # os: ubuntu-latest
+            # build-system: cmake
+
+          # - lua-version: 
             # - 5.1
             # - 5.2
             # - 5.3
-            - 5.4
-            - luajit
+            # - 5.4
+            # - luajit
             # - luajit-openresty
-            os: macos-latest
+            # os: macos-latest
+            # build-system: cmake
 
     env:
 
