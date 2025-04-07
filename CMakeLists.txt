@@ -148,7 +148,8 @@ if (DEFINED LUA_VERSION)
 else()
     find_package(Lua 5.1 REQUIRED)
     message(STATUS "Lua include directory: ${LUA_INCLUDE_DIR}")
-    message(STATUS "Lua libraries: ${LUA_LIBRARIES}")    
+    message(STATUS "Lua libraries: ${LUA_LIBRARIES}")
+    set(LUA_VERSION "${LUA_VERSION_MAJOR}.${LUA_VERSION_MINOR}")
 endif()
 
 # Get Lua interpreter for tests,
