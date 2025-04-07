@@ -803,6 +803,7 @@ jobs:
             -G "${cmake_generator}" `
             -DCMAKE_BUILD_TYPE=Release `
             -DBUILD_SHARED_LIBS=ON `
+            -DBUILD_TESTING=ON `
             "-DLUA_VERSION=${{ matrix.lua-version }}" `
             --install-prefix "${install_prefix}" `
             -S "lua-xz" `
