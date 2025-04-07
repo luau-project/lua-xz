@@ -584,6 +584,10 @@ jobs:
           - ubuntu-latest
           - macos-latest
 
+        build-system:
+          - cmake
+          - luarocks
+
     env:
 
       # use a .tar.xz file
