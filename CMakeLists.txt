@@ -194,6 +194,21 @@ endif()
 
 find_package(LibLZMA 5.0.0 REQUIRED)
 
+# On Windows, when going for tests,
+# add the binary directory of
+# liblzma to the system PATH
+# environment variable
+if (WIN32 AND LUA_XZ_BUILD_TESTS)
+    
+    get_filename_component(_LIBLZMA_DIR "${LIBLZMA_INCLUDE_DIR}" PATH)
+    get_filename_component(_LIBLZMA_DIR "${_LIBLZMA_DIR}" PATH)
+
+    set(LIBLZMA_BINDIR "${_LIBLZMA_DIR}/bin")
+    if (NOT IS_DIRECTORY "${LIBLZMA_BINDIR}")
+        message(FATAL_ERROR "Binary directory for liblzma was not found.")
+    endif()
+endif()
+
 set(LUA_XZ_SHARED "lua-xz")
 set(LUA_XZ_STATIC "lua-xz-static")
 set(_targets_to_install)
@@ -225,6 +240,11 @@ foreach(kind "SHARED" "STATIC")
                     add_test(NAME "${tn}"
                         COMMAND "${LUA_INTERPRETER}" "${t}"
                         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+                    if (WIN32)
+                        set_tests_properties("${tn}" PROPERTIES ENVIRONMENT "LUA_CPATH=${CMAKE_CURRENT_BINARY_DIR}/?.dll" "PATH=${LIBLZMA_BINDIR}\;$ENV{PATH}")
+                    else()
+                        set_tests_properties("${tn}" PROPERTIES ENVIRONMENT "LUA_CPATH=${CMAKE_CURRENT_BINARY_DIR}/?.so")
+                    endif()
                 endforeach()
             endif()
         else()
