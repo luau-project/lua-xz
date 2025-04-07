@@ -572,43 +572,26 @@ jobs:
       matrix:
         
         lua-version:
-          # - 5.1
-          # - 5.2
-          # - 5.3
+          - 5.1
+          - 5.2
+          - 5.3
           - 5.4
           - luajit
-          # - luajit-openresty
+          - luajit-openresty
 
         os:
           - windows-latest
-          # - ubuntu-latest
-          # - macos-latest
+          - ubuntu-latest
+          - macos-latest
 
         build-system:
           - cmake
-          # - luarocks
+          - luarocks
 
-        # exclude:
-          # - lua-version: 
-            # - 5.1
-            # - 5.2
-            # - 5.3
-            # - 5.4
-            # - luajit
-            # - luajit-openresty
-            # os: ubuntu-latest
-            # build-system: cmake
-
-          # - lua-version: 
-            # - 5.1
-            # - 5.2
-            # - 5.3
-            # - 5.4
-            # - luajit
-            # - luajit-openresty
-            # os: macos-latest
-            # build-system: cmake
-
+        exclude:
+          - lua-version: luajit-openresty
+            os: ubuntu-latest
+            build-system: cmake
     env:
 
       # use a .tar.xz file
@@ -758,10 +741,33 @@ jobs:
 
       - name: Setup Lua
         uses: luarocks/gh-actions-lua@v10
+        if: ${{ matrix.build-system != 'cmake' || runner.os != 'Linux' }}
         with:
           luaVersion: ${{ matrix.lua-version }}
 
-      - name: Fix LuaJIT name executable on Windows
+      - name: Setup Lua (cmake on Linux)
+        if: ${{ matrix.build-system == 'cmake' && runner.os == 'Linux' }}
+        run: |
+          if ("${{ matrix.lua-version }}" -eq "luajit")
+          {
+            sudo apt install -y luajit libluajit-5.1-dev;
+            sudo ln -s /usr/bin/luajit /usr/bin/lua
+          }
+          else if (-not ("${{ matrix.lua-version }}".StartsWith("luajit")))
+          {
+            if ("${{ matrix.lua-version }}" -eq "5.1")
+            {
+              sudo apt install -y lua${{ matrix.lua-version }} liblua${{ matrix.lua-version }}-0-dev;
+            }
+            else
+            {
+              sudo apt install -y lua${{ matrix.lua-version }} liblua${{ matrix.lua-version }}-dev;
+            }
+
+            sudo ln -s /usr/bin/lua${{ matrix.lua-version }} /usr/bin/lua
+          }
+
+      - name: Fix the name of LuaJIT executable on Windows
         if: ${{ runner.os == 'Windows' && startsWith(matrix.lua-version, 'luajit') }}
         run: |
           $luajit = Join-Path -Path "${{ github.workspace }}" -ChildPath ".lua" |
@@ -819,7 +825,7 @@ jobs:
               }
             }
       
-      - name: Configure lua-xz (${{ matrix.build-system }})
+      - name: Configure lua-xz (cmake)
         if: ${{ matrix.build-system == 'cmake' }}
         run: |
           $build_dir = Join-Path -Path "${{ runner.temp }}" -ChildPath "lua-xz";
@@ -851,15 +857,15 @@ jobs:
 
           Add-Content "${{ github.env }}" "LUA_XZ_BUILD_DIR=${build_dir}";
 
-      - name: Build lua-xz (${{ matrix.build-system }})
+      - name: Build lua-xz (cmake)
         if: ${{ matrix.build-system == 'cmake' }}
         run: cmake --build "${{ env.LUA_XZ_BUILD_DIR }}" --config Release;
 
-      - name: Test lua-xz (${{ matrix.build-system }})
+      - name: Test lua-xz (cmake)
         if: ${{ matrix.build-system == 'cmake' }}
         run: ctest --test-dir "${{ env.LUA_XZ_BUILD_DIR }}" -C Release;
 
-      - name: Install lua-xz (${{ matrix.build-system }})
+      - name: Install lua-xz (cmake)
         if: ${{ matrix.build-system == 'cmake' }}
         run: |
           if ("${{ runner.os }}" -eq "Windows")
@@ -869,10 +875,14 @@ jobs:
           else
           {
             sudo cmake --install "${{ env.LUA_XZ_BUILD_DIR }}" --config Release;
-            sudo ldconfig;
+
+            if ("${{ runner.os }}" -eq "Linux")
+            {
+              sudo ldconfig;
+            }
           }
 
-      - name: Build lua-xz (${{ matrix.build-system }})
+      - name: Build lua-xz (luarocks)
         if: ${{ matrix.build-system == 'luarocks' }}
         working-directory: lua-xz
         run: |
@@ -885,7 +895,7 @@ jobs:
 
           luarocks make $rockspec;
 
-      - name: Run samples (${{ matrix.build-system }})
+      - name: Run samples (luarocks)
         if: ${{ matrix.build-system == 'luarocks' }}
         working-directory: lua-xz
         run: |
