@@ -842,6 +842,10 @@ jobs:
               $cmake_generator = "NMake Makefiles";
             }
           }
+          else if ("${{ runner.os }}" -eq "macOS")
+          {
+            $install_prefix = Join-Path -Path "${{ github.workspace }}" -ChildPath ".lua";
+          }
 
           cmake `
             -G "${cmake_generator}" `
