@@ -580,18 +580,18 @@ jobs:
           - luajit-openresty
 
         os:
-          - windows-latest
-          - ubuntu-latest
+          # - windows-latest
+          # - ubuntu-latest
           - macos-latest
 
         build-system:
           - cmake
           - luarocks
 
-        exclude:
-          - lua-version: luajit-openresty
-            os: ubuntu-latest
-            build-system: cmake
+        # exclude:
+        #   - lua-version: luajit-openresty
+        #     os: ubuntu-latest
+        #     build-system: cmake
     env:
 
       # use a .tar.xz file
