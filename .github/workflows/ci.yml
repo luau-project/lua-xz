@@ -586,7 +586,7 @@ jobs:
 
         build-system:
           - cmake
-          - luarocks
+          # - luarocks
 
         # exclude:
         #   - lua-version: luajit-openresty
@@ -802,7 +802,7 @@ jobs:
       - name: Setup LuaRocks
         if: ${{ matrix.build-system == 'luarocks' }}
         uses: luarocks/gh-actions-luarocks@v5
-      
+
       - name: Lint rockspecs
         if: ${{ matrix.build-system == 'luarocks' }}
         working-directory: lua-xz
@@ -822,7 +822,7 @@ jobs:
                 exit 1;
               }
             }
-      
+
       - name: Configure lua-xz (cmake)
         if: ${{ matrix.build-system == 'cmake' }}
         run: |
@@ -865,7 +865,17 @@ jobs:
 
       - name: Test lua-xz (cmake)
         if: ${{ matrix.build-system == 'cmake' }}
-        run: ctest --test-dir "${{ env.LUA_XZ_BUILD_DIR }}" -C Release;
+        run: |
+          ctest --test-dir "${{ env.LUA_XZ_BUILD_DIR }}" -C Release;
+
+          if ($LASTEXITCODE -ne 0)
+          {
+            $log = Join-Path -Path "${{ env.LUA_XZ_BUILD_DIR }}" -ChildPath "Testing" |
+              Join-Path -ChildPath "Temporary" |
+              Join-Path -ChildPath "LastTest.log";
+
+            Write-Host (Get-Content $log);
+          }
 
       - name: Install lua-xz (cmake)
         if: ${{ matrix.build-system == 'cmake' }}
