@@ -5,4 +5,5 @@
 *.bash
 *.sh
 *.xz
+*.lzma
 .vscode
