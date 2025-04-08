@@ -6,11 +6,11 @@ Welcome to ```lua-xz``` documentation!
 
 On Unix, the process to have `Lua`, `LuaRocks` and `liblzma` installed is quite straightforward, because most distributions make these tools and libraries available through a package manager to their users. On the other hand, on Windows, the concept of software distribution from a centralized repository provided by Microsoft is not a reality. 
 
-Then, the main goal here is to guide Lua users to build `liblzma` and `lua-xz` on Windows. In the long run, the easiest way to manage Lua modules goes through the use of LuaRocks. However, due the fact that many Lua users on Windows struggle to setup LuaRocks correctly, we describe how to build `liblzma` and `lua-xz` out of LuaRocks.
+Then, the main goal here is to guide Lua users to build `liblzma` and `lua-xz` on Windows. In the long run, the easiest way to manage Lua modules goes through the use of LuaRocks. However, due the fact that many Lua users on Windows struggle to setup LuaRocks correctly, we also describe how to build `liblzma` and `lua-xz` out of LuaRocks.
 
 ## Setup liblzma and lua-xz on Windows
 
-In short, we provide two manners to build and install `liblzma` + `lua-xz`
+In short, we provide two manners to build and install `liblzma` + `lua-xz`.
 
 1. [To play nicely with LuaRocks](#to-play-nicely-with-luarocks)
 2. [Out of LuaRocks](#out-of-luarocks)
@@ -18,6 +18,8 @@ In short, we provide two manners to build and install `liblzma` + `lua-xz`
 > [!NOTE]
 > 
 > To make things harder on Windows, in general, the building process or installation method varies according to the C toolchain used to build Lua.
+
+If you have `LuaRocks` installed and configured correctly on your Windows system, then read the appropriate guide for your C toolchain in the section [To play nicely with LuaRocks](#to-play-nicely-with-luarocks). Otherwise, in case you find it too difficult to setup LuaRocks, go to [Out of LuaRocks](#out-of-luarocks).
 
 ### To play nicely with LuaRocks
 

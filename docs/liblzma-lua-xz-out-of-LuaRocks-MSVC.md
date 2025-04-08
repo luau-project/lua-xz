@@ -9,8 +9,9 @@ In the first part, this guide explains the process to setup ```liblzma``` on Win
 * [Build lua-xz](#build-lua-xz)
 
 ## Prerequisites
-- **CMake**: Install the latest version of CMake from [https://cmake.org/download/](https://cmake.org/download/).
-- **MSVC** + **Lua built with MSVC**: This guide assumes that you build Lua with MSVC.
+- **CMake**: Install the latest version of CMake from [https://cmake.org/download/](https://cmake.org/download/);
+- **MSVC** + **Lua built with MSVC**: This guide assumes that you built Lua with MSVC;
+- **Git**: Install the latest version of `git` for Windows from [https://git-scm.com/downloads](https://git-scm.com/downloads).
 
 > [!NOTE]
 > 
@@ -18,6 +19,7 @@ In the first part, this guide explains the process to setup ```liblzma``` on Win
 > 
 >   ```cmd
 >   cl
+>   git --version
 >   cmake --version
 >   tar --version
 >   curl --version
@@ -89,7 +91,13 @@ In order to build `lua-xz`, you need:
     SET LUA_DIR=C:\path\to\Lua
     ```
 
-to hold the path to the directory of Lua.
+    to hold the path to the directory of Lua.
+
+* `lua-xz` source code, which you can clone from the `main` branch of this repository:
+
+    ```cmd
+    git clone https://github.com/luau-project/lua-xz
+    ```
 
 > [!TIP]
 > 
@@ -99,36 +107,30 @@ to hold the path to the directory of Lua.
 >   SET LUA_DIR=C:\Lua
 >   ```
 
-Now, assuming Lua 5.4 is installed at `%LUA_DIR%` and `liblzma` installed at `%LIBLZMA_DIR%`, we can change directory to `lua-xz`, then build it using `nmake` by running the command below:
+1. Change directory to the cloned `lua-xz` directory:
+
+    ```cmd
+    cd lua-xz
+    ```
+
+2. Now, assuming Lua 5.4 is installed at `%LUA_DIR%` and `liblzma` installed at `%LIBLZMA_DIR%`, we can change directory to `lua-xz`, then build it using `nmake` by running the command below:
 
 ```cmd
-    cd path\to\lua-xz
-    nmake /F Makefile.msvc ^
-        "LUA_MAJOR_VERSION=5" ^
-        "LUA_MINOR_VERSION=4" ^
-        "LUA_DIR=%LUA_DIR%" ^
-        "LIBLZMA_DIR=%LIBLZMA_DIR%"
+nmake /F Makefile.msvc "LUA_MAJOR_VERSION=5" "LUA_MINOR_VERSION=4" "LUA_DIR=%LUA_DIR%" "LIBLZMA_DIR=%LIBLZMA_DIR%"
 ```
 
 > [!IMPORTANT]
 > 
-> The command above might fail if your Lua import library is not named in the same way as expected by the Makefile.msvc. To fix this, you can check the name of Lua import library at `%LUA_DIR%\lib`. At the moment, the Makefile assumes it is named `lua54.lib` for Lua 5.4. You can override it, let's say to `lua.lib`, by running:
+> The command above might fail if your Lua import library is not named in the same way as expected by the Makefile.msvc. To fix this, you can check the name of Lua import library at `%LUA_DIR%\lib`. At the moment, the Makefile assumes it is named `lua54.lib` for Lua 5.4 (thus, the ```%LUA_LIB%=lua54.lib``` is automatically set). You can override it, let's say to `lua.lib`, by running:
 > 
 >   ```cmd
->       nmake /F Makefile.msvc ^
->           "LUA_MAJOR_VERSION=5" ^
->           "LUA_MINOR_VERSION=4" ^
->           "LUA_DIR=%LUA_DIR%" ^
->           "LUA_DIR=lua.lib" ^
->           "LIBLZMA_DIR=%LIBLZMA_DIR%"
+>   nmake /F Makefile.msvc "LUA_MAJOR_VERSION=5" "LUA_MINOR_VERSION=4" "LUA_DIR=%LUA_DIR%" "LUA_LIB=lua.lib" "LIBLZMA_DIR=%LIBLZMA_DIR%"
 >   ```
 
-If you managed to get a successful build, then you are ready to install `lua-xz`:
+3. If you managed to get a successful build, then you are ready to install `lua-xz` just by adding `install` at the end of the command that you used to have a successful build above:
 
-```cmd
-    nmake /F Makefile.msvc ^
-        "LUA_MAJOR_VERSION=5" ^
-        "LUA_MINOR_VERSION=4" ^
-        "LUA_DIR=%LUA_DIR%" ^
-        "LIBLZMA_DIR=%LIBLZMA_DIR%" install
-```
+    ```cmd
+    nmake /F Makefile.msvc "LUA_MAJOR_VERSION=5" "LUA_MINOR_VERSION=4" "LUA_DIR=%LUA_DIR%" "LIBLZMA_DIR=%LIBLZMA_DIR%" install
+    ```
+
+[Back to docs](./README.md#documentation), [Back to ToC](#table-of-contents)
