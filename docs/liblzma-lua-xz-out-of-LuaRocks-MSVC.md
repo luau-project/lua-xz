@@ -108,6 +108,8 @@ In order to build `lua-xz`, you need:
     git clone https://github.com/luau-project/lua-xz
     ```
 
+### Steps
+
 1. Change directory to the cloned `lua-xz` directory:
 
     ```cmd
@@ -146,7 +148,7 @@ This section describes issues you might face when running the command above
 nmake /F Makefile.msvc "LUA_MAJOR_VERSION=5" "LUA_MINOR_VERSION=4" "LUA_DIR=%LUA_DIR%" "LIBLZMA_DIR=%LIBLZMA_DIR%"
 ```
 
-### Issues
+#### Issues
 
 1. Check your Lua version: in case it is Lua 5.1, then replace `"LUA_MINOR_VERSION=4"` by `"LUA_MINOR_VERSION=1"`
 
