@@ -122,7 +122,7 @@ In order to build `lua-xz`, you need:
     cd lua-xz
     ```
 
-2. Now, assuming Lua 5.4 is installed at `%LUA_DIR%` and `liblzma` installed at `%LIBLZMA_DIR%`, we can build `lua-xz` using `mingw32-make` running the command below:
+2. Now, assuming Lua 5.4 is installed at `%LUA_DIR%` and `liblzma` installed at `%LIBLZMA_DIR%`, we can build `lua-xz` using `mingw32-make` by running the command below:
 
     ```cmd
     mingw32-make -f Makefile.mingw "LUA_MAJOR_VERSION=5" "LUA_MINOR_VERSION=4" "LUA_DIR=%LUA_DIR%" "LIBLZMA_DIR=%LIBLZMA_DIR%"
