@@ -30,45 +30,50 @@
 #include <string.h>
 
 /*
-** Define LUA_MAXINTEGER and LUA_MININTEGER:
+** Define LUA_XZ_MEMLIMIT_UNLIMITED
+** to act as replacement
+** value to UINT64_MAX.
+** On liblzma, UINT64_MAX is used
+** to disable memlimit.
 ** 
-** these values are not defined on Lua 5.3 or older
+** The reason for this macro is that
+** Lua might be compiled for
+** platforms such that the type
+** lua_Integer (the integer type for Lua)
+** lies in 32-bit or 16-bit range.
+** Thus, it might not be able
+** to hold UINT64_MAX. Then,
+** we overcome this limitation
+** by using a special value
+** provided by LUA_XZ_MEMLIMIT_UNLIMITED
+** that is replaced by UINT64_MAX
+** when needed.
 */
-#if !(defined(LUA_MAXINTEGER) && defined(LUA_MININTEGER))
-#if LUA_VERSION_NUM < 503
-/* On Lua 5.1 and Lua 5.2, lua_Integer is a ptrdiff_t */
-#if !(defined(PTRDIFF_MAX) && defined(PTRDIFF_MIN))
-#include <stdint.h>
-#endif
-#if defined(PTRDIFF_MAX) && defined(PTRDIFF_MIN)
-#define LUA_MAXINTEGER PTRDIFF_MAX
-#define LUA_MININTEGER PTRDIFF_MIN
-#else
-#error "Compiler does not define 'PTRDIFF_MAX' and 'PTRDIFF_MIN'"
-#endif
-#elif LUA_VERSION_NUM == 503
+#ifndef LUA_XZ_MEMLIMIT_UNLIMITED
+#ifdef LUA_MININTEGER /* Lua 5.4 or newer */
+#define LUA_XZ_MEMLIMIT_UNLIMITED LUA_MININTEGER
+#elif LUA_VERSION_NUM == 503  /* Lua 5.3 or older */
 #if LUA_INT_TYPE == LUA_INT_INT
-#define LUA_MAXINTEGER INT_MAX
-#define LUA_MININTEGER INT_MIN
+#define LUA_XZ_MEMLIMIT_UNLIMITED INT_MIN
 #elif LUA_INT_TYPE == LUA_INT_LONG
-#define LUA_MAXINTEGER LONG_MAX
-#define LUA_MININTEGER LONG_MIN
+#define LUA_XZ_MEMLIMIT_UNLIMITED LONG_MIN
 #elif LUA_INT_TYPE == LUA_INT_LONGLONG
 #if defined(LLONG_MAX)
-#define LUA_MAXINTEGER LLONG_MAX
-#define LUA_MININTEGER LLONG_MIN
+#define LUA_XZ_MEMLIMIT_UNLIMITED LLONG_MIN
 #elif defined(LUA_USE_WINDOWS)
-#define LUA_MAXINTEGER _I64_MAX
-#define LUA_MININTEGER _I64_MIN
+#define LUA_XZ_MEMLIMIT_UNLIMITED _I64_MIN
 #else
 #error "Compiler does not support 'long long'"
 #endif
 #endif
+#else
+/* On Lua 5.1 and Lua 5.2, lua_Integer is a ptrdiff_t */
+#ifdef PTRDIFF_MIN
+#define LUA_XZ_MEMLIMIT_UNLIMITED PTRDIFF_MIN
+#else
+#define LUA_XZ_MEMLIMIT_UNLIMITED INT_MIN
 #endif
 #endif
-
-#if defined(LUA_MAXINTEGER) && defined(LUA_MININTEGER) && (LUA_MAXINTEGER-20 < 32760 || LUA_MAXINTEGER-20 < 2147483640L)
-#error "Lua integers must be able to store at least 64-bits"
 #endif
 
 /* start of auxiliary functions */
@@ -366,9 +371,9 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
     else
     {
         arg_memlimit = luaL_checkinteger(L, 1);
-        luaL_argcheck(L, arg_memlimit == LUA_MININTEGER || arg_memlimit >= 0, 1, "memlimit must be an integer greater than or equal to 0");
+        luaL_argcheck(L, arg_memlimit == LUA_XZ_MEMLIMIT_UNLIMITED || arg_memlimit >= 0, 1, "memlimit must be an integer greater than or equal to 0");
 
-        if (arg_memlimit == LUA_MININTEGER)
+        if (arg_memlimit == LUA_XZ_MEMLIMIT_UNLIMITED)
         {
             memlimit = UINT64_MAX;
         }
@@ -740,7 +745,7 @@ LUA_XZ_EXPORT int luaopen_xz(lua_State *L)
     lua_settable(L, -3);
 
     lua_pushstring(L, "MEMLIMIT_UNLIMITED");
-    lua_pushinteger(L, LUA_MININTEGER);
+    lua_pushinteger(L, LUA_XZ_MEMLIMIT_UNLIMITED);
     lua_settable(L, -3);
 
     lua_pushstring(L, "CONCATENATED");

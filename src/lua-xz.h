@@ -35,7 +35,7 @@
 /*
 ** 
 ** default size of the output buffer
-** used by stream's `update' function
+** used by stream's `exec' function
 ** when the user didn't provide it
 ** 
 */

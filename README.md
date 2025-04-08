@@ -33,7 +33,6 @@
     * [stream (xzreader)](#stream-xzreader)
     * [stream (xzwriter)](#stream-xzwriter)
     * [check](#check)
-* [Known limitations](#known-limitations)
 * [Change log](#change-log)
 * [Future works](#future-works)
 
@@ -1157,11 +1156,6 @@ Holds constants and methods regarding the calculation of integrity checks during
     * *Return* (```void```)
 
 [Back to ToC](#table-of-contents)
-
-## Known limitations
-
-1. Due the fact that ```lua-xz``` depends on the ```liblzma``` library, which internally uses 64-bit integers on most of its APIs, ```lua-xz``` requires a Lua build that uses 64-bit integers. This means that the Lua type ```lua_Integer``` must be able to store at least 64 bits;
-2. Again due the dependency on ```liblzma```, which requires a C compiler compliant with C99, ```lua-xz``` also requires C99 to build.
 
 ## Change log
 
