@@ -9,6 +9,8 @@ on:
     paths-ignore:
       - "**/*.md"
       - "docs/**"
+  workflow_dispatch:
+    branches: '*'
 
 env:
   ROCKSPEC_VERSION: 0.0.1

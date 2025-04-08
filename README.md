@@ -1,6 +1,7 @@
 # lua-xz
 
-[![CI](https://github.com/luau-project/lua-xz/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
+[![CI](https://github.com/luau-project/lua-xz/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml) [![LuaRocks](https://img.shields.io/luarocks/v/luau-project/lua-xz?label=LuaRocks&color=2c3e67)](https://luar 
+ocks.org/modules/luau-project/lua-xz)
 
 > [!IMPORTANT]
 > 
