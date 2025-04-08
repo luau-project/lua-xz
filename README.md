@@ -2,6 +2,10 @@
 
 [![CI](https://github.com/luau-project/lua-xz/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml) [![LuaRocks](https://img.shields.io/luarocks/v/luau-project/lua-xz?label=LuaRocks&color=2c3e67)](https://luarocks.org/modules/luau-project/lua-xz)
 
+> [!IMPORTANT]
+> 
+> **DO NOT** use this library while it is not available on [LuaRocks](https://luarocks.org/), because it is not ready yet. It is under development / testing before the initial release.
+
 ## Overview
 
 **lua-xz** is a lightweight, native library for Lua providing a streaming interface to read/write .lzma and .xz files. To do so, ```lua-xz``` uses the general-purpose data compression `liblzma` library from [XZ Utils](https://tukaani.org/xz/).
