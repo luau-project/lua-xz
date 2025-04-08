@@ -7,6 +7,7 @@ In the first part, this guide explains the process to setup ```liblzma``` on Win
 * [Prerequisites](#prerequisites)
 * [Build liblzma](#build-liblzma)
 * [Build lua-xz](#build-lua-xz)
+* [Possible issues building or installing lua-xz](#possible-issues-building-or-installing-lua-xz)
 
 ## Prerequisites
 - **CMake**: Install the latest version of CMake from [https://cmake.org/download/](https://cmake.org/download/);
@@ -35,7 +36,7 @@ Once you finished the initial steps in the [Requirements](#requirements) section
 > 
 > In the following commands, each character is important, because it was tested and confirmed to work. So, do not erase any character if you are not confident on what you are doing.
 
-1. Close any opened instances, and open again the command prompt (```cmd```);
+1. Close any opened instances, and open again the command prompt (```cmd```).  **Note**: if your Lua installation lies in a system-wide directory (`C:\Program Files\Lua`), then you must open the command prompt as administrator by launching it as `Run as administrator` to avoid permission issues on install;
 
 2. Change directory to any folder without spaces (`%SystemDrive%\` will expand to `C:\` if your system was installed at C:), create a clean directory to build ```liblzma``` (potentially removing old directories) and change directory to it
 
@@ -99,19 +100,19 @@ In order to build `lua-xz`, you need:
 
     to hold the path to the directory of Lua.
 
+> [!TIP]
+> 
+> If your Lua interpreter (`lua.exe`) can be found at `C:\Lua\bin\lua.exe`, then you shall set `%LUA_DIR%` as follows
+> 
+>   ```cmd
+>   SET LUA_DIR=C:\Lua
+>   ```
+
 * `lua-xz` source code, which you can clone from the `main` branch of this repository:
 
     ```cmd
     git clone https://github.com/luau-project/lua-xz
     ```
-
-> [!TIP]
-> 
-> If your Lua interpreter (`lua.exe`) can be found at `C:\Lua\lua.exe`, then you shall set `%LUA_DIR%` as follows
-> 
->   ```cmd
->   SET LUA_DIR=C:\Lua
->   ```
 
 1. Change directory to the cloned `lua-xz` directory:
 
@@ -127,16 +128,66 @@ In order to build `lua-xz`, you need:
 
 > [!IMPORTANT]
 > 
-> The command above might fail if your Lua import library is not named in the same way as expected by the Makefile.mingw. To fix this, you can check the name of Lua import library at `%LUA_DIR%\lib`. At the moment, the Makefile assumes it is named `lua54.dll.a` for Lua 5.4 (thus, the ```%LUA_LIB%=lua54``` is automatically set). You can override it, let's say to `lua.dll.a`, by running:
-> 
->   ```cmd
->   mingw32-make -f Makefile.mingw "LUA_MAJOR_VERSION=5" "LUA_MINOR_VERSION=4" "LUA_DIR=%LUA_DIR%" "LUA_LIB=lua" "LIBLZMA_DIR=%LIBLZMA_DIR%"
->   ```
+> If you face any issue during the execution of this step, check the section [Build issues](#build-issues) below.
 
 3. If you managed to get a successful build, then you are ready to install `lua-xz` just by adding `install` at the end of the command that you used to have a successful build above:
 
     ```cmd
     mingw32-make -f Makefile.mingw "LUA_MAJOR_VERSION=5" "LUA_MINOR_VERSION=4" "LUA_DIR=%LUA_DIR%" "LUA_LIB=lua" "LIBLZMA_DIR=%LIBLZMA_DIR%" install
     ```
+
+> [!IMPORTANT]
+> 
+> If you face any issue during the execution of this step, check the section [Installation issues](#installation-issues) below.
+
+## Possible issues building or installing lua-xz
+
+Below, we list all the common issues that might apply when building `lua-xz` from the makefiles.
+
+### Build issues
+
+This section describes issues you might face when running the command above
+
+```cmd
+mingw32-make -f Makefile.mingw "LUA_MAJOR_VERSION=5" "LUA_MINOR_VERSION=4" "LUA_DIR=%LUA_DIR%" "LIBLZMA_DIR=%LIBLZMA_DIR%"
+```
+
+### Issues
+
+1. Check your Lua version: in case it is Lua 5.1, then replace `"LUA_MINOR_VERSION=4"` by `"LUA_MINOR_VERSION=1"`
+
+2. Check your Lua directory: if your interpreter is located at `C:\Program Files\Lua\bin\lua.exe`, then reset `%LUA_DIR%` variable by running
+
+    ```cmd
+    set "LUA_DIR=C:\Program Files\Lua"
+    ```
+
+and rerun the build command again.
+
+3. Check the include directory of Lua: if the header files for Lua (`lua.h`, `luaconf.h`, `lualib.h`, `lauxlib.h`, `lua.hpp`) are located at `C:\Program Files\Lua\include\lua5.4`, then add the argument `"LUA_INCDIR=C:\Program Files\Lua\include\lua5.4"` to the build command as follows:
+
+    ```cmd
+    mingw32-make -f Makefile.mingw "LUA_MAJOR_VERSION=5" "LUA_MINOR_VERSION=4" "LUA_DIR=%LUA_DIR%" "LUA_INCDIR=C:\Program Files\Lua\include\lua5.4" "LIBLZMA_DIR=%LIBLZMA_DIR%"
+    ```
+
+4. Check the import library of Lua: if the import library for Lua (a file with extension `.dll.a`, most likely named `lua.dll.a`, `lua-5.4.dll.a`, `lua54.dll.a`). If it happens to be `lua.dll.a`, then add the argument `"LUA_LIB=lua"` to the build command as follows:
+
+    ```cmd
+    mingw32-make -f Makefile.mingw "LUA_MAJOR_VERSION=5" "LUA_MINOR_VERSION=4" "LUA_DIR=%LUA_DIR%" "LUA_LIB=lua" "LIBLZMA_DIR=%LIBLZMA_DIR%"
+    ```
+
+### Installation issues
+
+This section describes issues you might face when running the command above
+
+```cmd
+mingw32-make -f Makefile.mingw "LUA_MAJOR_VERSION=5" "LUA_MINOR_VERSION=4" "LUA_DIR=%LUA_DIR%" "LIBLZMA_DIR=%LIBLZMA_DIR%" install
+```
+
+Here, all the issues covered on [Build issues](#build-issues) might happen, so double-check it.
+
+> [!IMPORTANT]
+> 
+> Additionally, if your Lua installation resides in a side-wide directory with protected permissions, you must run all the commands in an elevated command prompt (`Run as administrator`). If you got issues regarding describing permissions rights, one possible solution that might apply is running all the [build steps](#build-lua-xz) above as admin.
 
 [Back to docs](./README.md#documentation), [Back to ToC](#table-of-contents)
