@@ -30,7 +30,7 @@ In the first part, this guide explains the process to setup ```liblzma``` on Win
 
 ## Build liblzma
 
-Once you finished the initial steps in the [Requirements](#requirements) section, you are ready to build liblzma.
+Once you finished the initial steps in the [Prerequisites](#prerequisites) section, you are ready to build liblzma.
 
 > [!NOTE]
 > 
