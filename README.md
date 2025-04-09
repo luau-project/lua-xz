@@ -1153,7 +1153,7 @@ Holds constants and methods regarding the calculation of integrity checks during
     * *Parameters*:
         * *check* (```integer```): Type of the integrity check to calculate from uncompressed data. **Note**: it is safe to call this with a value that is not in the range [0, 15]; in that case the return value is always false.
     * *Remark*: `xz.check.NONE` and `xz.check.CRC32` are always supported (even if `liblzma` is built with limited features).
-    * *Return* (```void```)
+    * *Return* (```boolean```)
 
 [Back to ToC](#table-of-contents)
 
