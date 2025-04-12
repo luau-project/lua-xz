@@ -1096,7 +1096,7 @@ A stream to compress data to .xz format
         * an integer: 0, ..., 9;
         * a string: "0", ..., "9";
         * a string: "0e", ..., "9e".
-    * *check* (```integer```): Type of the integrity check to calculate from uncompressed data. See [check constants](#constants-1) for all the possible values as constants;
+    * *check* (```integer```): Type of the integrity check to calculate from uncompressed data. See [check constants](#constants) for all the possible values as constants;
 * *Return* (```userdata```): An instance of the stream writer class.
 
 #### Instance methods
