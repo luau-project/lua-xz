@@ -37,7 +37,13 @@
 > [!IMPORTANT]
 > 
 > On each operating system or software distribution, ```lua-xz``` depends on the ```liblzma``` library:
->   * On Windows, read the [docs](./docs/README.md#documentation) to learn how to install ```liblzma``` in a form that it plays nicely with Lua and LuaRocks;
+>   * On Windows, read the [docs](./docs/README.md#documentation) to learn how to install ```liblzma```;
+>   * On macOS:
+> 
+>     ```bash
+>     brew install xz
+>     ```
+> 
 >   * On Debian-based (e.g.: Ubuntu) distributions:
 > 
 >     ```bash
