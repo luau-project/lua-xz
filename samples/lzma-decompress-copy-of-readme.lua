@@ -16,16 +16,12 @@ local decompressed_filename = "lzma-copy-of-" .. (filename:gsub("%.lzma$", ""))
 -- note: xz.MEMLIMIT_UNLIMITED does not use a limit
 -- 
 -- tip: always check for errors
-local ok, stream = pcall(
-    function()
-        return xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
-    end
-)
+local stream, stream_err = xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
 
 -- an error occurred ?
-if (not ok) then
+if (not stream) then
     -- raise the error
-    error(stream)
+    error(stream_err)
 end
 
 -- open the input file to feed
@@ -70,11 +66,7 @@ do
     -- execute the stream
     -- 
     -- tip: always check for errors
-    local ok, exec_err = pcall(
-        function()
-            stream:exec(producer, consumer)
-        end
-    )
+    local ok, exec_err = stream:exec(producer, consumer)
 
     -- an error occurred ?
     if (not ok) then

@@ -14,16 +14,12 @@ do
     -- create a lzma writer stream
     -- 
     -- tip: always check for errors
-    local ok, writer_stream = pcall(
-        function()
-            return xz.stream.lzmawriter(xz.PRESET_DEFAULT)
-        end
-    )
+    local writer_stream, writer_stream_err = xz.stream.lzmawriter(xz.PRESET_DEFAULT)
 
     -- an error occurred ?
-    if (not ok) then
+    if (not writer_stream) then
         -- raise the error
-        error(writer_stream)
+        error(writer_stream_err)
     end
 
     -- open / create a destination file to hold the compressed content
@@ -56,11 +52,7 @@ do
         -- execute the stream
         -- 
         -- tip: always check for errors
-        local ok, exec_err = pcall(
-            function()
-                writer_stream:exec(producer, consumer)
-            end
-        )
+        local ok, exec_err = writer_stream:exec(producer, consumer)
 
         -- an error occurred ?
         if (not ok) then
@@ -83,18 +75,20 @@ do
     -- close the output file
     output_file:close()
 end
---[[ end of encoding]]
+--[[ end of encoding ]]
 
 --[[ start of decoding ]]
 do
     -- create a lzma reader stream
     -- 
     -- tip: always check for errors
-    local ok, reader_stream = pcall(
-        function()
-            return xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
-        end
-    )
+    local reader_stream, reader_stream_err = xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
+
+    -- an error occurred ?
+    if (not reader_stream) then
+        -- raise the error
+        error(reader_stream_err)
+    end
 
     -- open the file created above
     -- to feed the lzma reader stream
@@ -132,11 +126,7 @@ do
         -- execute the stream
         -- 
         -- tip: always check for errors
-        local ok, exec_err = pcall(
-            function()
-                reader_stream:exec(producer, consumer)
-            end
-        )
+        local ok, exec_err = reader_stream:exec(producer, consumer)
 
         -- an error occurred ?
         if (not ok) then
@@ -159,7 +149,7 @@ do
     -- close the file
     input_file:close()
 end
---[[ end of decoding]]
+--[[ end of decoding ]]
 
 -- make sure that the decoded data
 -- after compression-decompression

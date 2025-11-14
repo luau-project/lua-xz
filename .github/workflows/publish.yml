@@ -31,23 +31,20 @@ jobs:
           }
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: lua-xz
           ref: ${{ github.ref }}
-  
+
       - name: Setup Lua
-        uses: luarocks/gh-actions-lua@v10
-      
-      - name: Setup LuaRocks
-        uses: luarocks/gh-actions-luarocks@v5
+        uses: luau-project/setup-lua@48961279fba711f39fa539a4903b1ac66153b694 # v1.0.0
 
       - name: Make sure that tags from GitHub and rockspec are equal
         run: |
           $rockspec = Get-ChildItem . -Recurse -File |
             Where-Object Name -EQ "${{ env.ROCKSPEC }}" |
             Select-Object -ExpandProperty FullName -First 1;
-          
+
           $rockspec_tag = lua -e "dofile(arg[0]); io.write(source.tag);" -- "${rockspec}";
           $github_tag = "${{ github.ref_name }}";
 
@@ -63,13 +60,11 @@ jobs:
 
       - name: Install LuaRocks dependencies to upload
         run: |
-          sudo apt update
-          sudo apt upgrade -y
           sudo apt install -y libssl-dev;
           luarocks install dkjson;
           luarocks install luasocket;
           luarocks install luasec;
-      
+
       - name: Upload rockspec to LuaRocks
         working-directory: lua-xz
         env:
@@ -78,8 +73,8 @@ jobs:
           $rockspec = Get-ChildItem . -Recurse -File |
               Where-Object Name -EQ "${{ env.ROCKSPEC }}" |
               Select-Object -ExpandProperty FullName -First 1;
-          
+
           $color = (0x1b -as [char]) + "[36m";
           Write-Host "Uploading rockspec: ${color}${rockspec}";
-          
+
           luarocks upload $rockspec "--temp-key=$env:UPLOAD_KEY" --skip-pack

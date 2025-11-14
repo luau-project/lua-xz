@@ -103,16 +103,12 @@ local compressed_filename = filename .. ".lzma"
 --    * a string "0e", ..., "9e" (preset level + extreme modifier)
 -- 
 -- tip: always check for errors
-local ok, stream = pcall(
-    function()
-        return xz.stream.lzmawriter(xz.PRESET_DEFAULT)
-    end
-)
+local stream, stream_err = xz.stream.lzmawriter(xz.PRESET_DEFAULT)
 
 -- an error occurred ?
-if (not ok) then
+if (not stream) then
     -- raise the error
-    error(stream)
+    error(stream_err)
 end
 
 -- open the input file to feed
@@ -157,11 +153,7 @@ do
     -- execute the stream
     -- 
     -- tip: always check for errors
-    local ok, exec_err = pcall(
-        function()
-            stream:exec(producer, consumer)
-        end
-    )
+    local ok, exec_err = stream:exec(producer, consumer)
 
     -- an error occurred ?
     if (not ok) then
@@ -214,16 +206,12 @@ local decompressed_filename = "lzma-copy-of-" .. (filename:gsub("%.lzma$", ""))
 -- note: xz.MEMLIMIT_UNLIMITED does not use a limit
 -- 
 -- tip: always check for errors
-local ok, stream = pcall(
-    function()
-        return xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
-    end
-)
+local stream, stream_err = xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
 
 -- an error occurred ?
-if (not ok) then
+if (not stream) then
     -- raise the error
-    error(stream)
+    error(stream_err)
 end
 
 -- open the input file to feed
@@ -268,11 +256,7 @@ do
     -- execute the stream
     -- 
     -- tip: always check for errors
-    local ok, exec_err = pcall(
-        function()
-            stream:exec(producer, consumer)
-        end
-    )
+    local ok, exec_err = stream:exec(producer, consumer)
 
     -- an error occurred ?
     if (not ok) then
@@ -323,16 +307,12 @@ do
     -- create a lzma writer stream
     -- 
     -- tip: always check for errors
-    local ok, writer_stream = pcall(
-        function()
-            return xz.stream.lzmawriter(xz.PRESET_DEFAULT)
-        end
-    )
+    local writer_stream, writer_stream_err = xz.stream.lzmawriter(xz.PRESET_DEFAULT)
 
     -- an error occurred ?
-    if (not ok) then
+    if (not writer_stream) then
         -- raise the error
-        error(writer_stream)
+        error(writer_stream_err)
     end
 
     -- open / create a destination file to hold the compressed content
@@ -365,11 +345,7 @@ do
         -- execute the stream
         -- 
         -- tip: always check for errors
-        local ok, exec_err = pcall(
-            function()
-                writer_stream:exec(producer, consumer)
-            end
-        )
+        local ok, exec_err = writer_stream:exec(producer, consumer)
 
         -- an error occurred ?
         if (not ok) then
@@ -392,18 +368,20 @@ do
     -- close the output file
     output_file:close()
 end
---[[ end of encoding]]
+--[[ end of encoding ]]
 
 --[[ start of decoding ]]
 do
     -- create a lzma reader stream
     -- 
     -- tip: always check for errors
-    local ok, reader_stream = pcall(
-        function()
-            return xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
-        end
-    )
+    local reader_stream, reader_stream_err = xz.stream.lzmareader(xz.MEMLIMIT_UNLIMITED)
+
+    -- an error occurred ?
+    if (not reader_stream) then
+        -- raise the error
+        error(reader_stream_err)
+    end
 
     -- open the file created above
     -- to feed the lzma reader stream
@@ -441,11 +419,7 @@ do
         -- execute the stream
         -- 
         -- tip: always check for errors
-        local ok, exec_err = pcall(
-            function()
-                reader_stream:exec(producer, consumer)
-            end
-        )
+        local ok, exec_err = reader_stream:exec(producer, consumer)
 
         -- an error occurred ?
         if (not ok) then
@@ -468,7 +442,7 @@ do
     -- close the file
     input_file:close()
 end
---[[ end of decoding]]
+--[[ end of decoding ]]
 
 -- make sure that the decoded data
 -- after compression-decompression
@@ -519,17 +493,15 @@ local compressed_filename = filename .. ".xz"
 --      xz.check.CRC32 instead.
 -- 
 -- tip: always check for errors
-local ok, stream = pcall(
-    function()
-        local check = xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
-        return xz.stream.xzwriter(xz.PRESET_DEFAULT, check)
-    end
+local stream, stream_err = xz.stream.xzwriter(
+    xz.PRESET_DEFAULT,
+    xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
 )
 
 -- an error occurred ?
-if (not ok) then
+if (not stream) then
     -- raise the error
-    error(stream)
+    error(stream_err)
 end
 
 -- open the input file to feed
@@ -574,11 +546,7 @@ do
     -- execute the stream
     -- 
     -- tip: always check for errors
-    local ok, exec_err = pcall(
-        function()
-            stream:exec(producer, consumer)
-        end
-    )
+    local ok, exec_err = stream:exec(producer, consumer)
 
     -- an error occurred ?
     if (not ok) then
@@ -635,16 +603,12 @@ local decompressed_filename = "xz-copy-of-" .. (filename:gsub("%.xz$", ""))
 --       not only the first stream.
 -- 
 -- tip: always check for errors
-local ok, stream = pcall(
-    function()
-        return xz.stream.xzreader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
-    end
-)
+local stream, stream_err = xz.stream.xzreader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
 
 -- an error occurred ?
-if (not ok) then
+if (not stream) then
     -- raise the error
-    error(stream)
+    error(stream_err)
 end
 
 -- open the input file to feed
@@ -689,11 +653,7 @@ do
     -- execute the stream
     -- 
     -- tip: always check for errors
-    local ok, exec_err = pcall(
-        function()
-            stream:exec(producer, consumer)
-        end
-    )
+    local ok, exec_err = stream:exec(producer, consumer)
 
     -- an error occurred ?
     if (not ok) then
@@ -744,17 +704,15 @@ do
     -- create a xz writer stream
     -- 
     -- tip: always check for errors
-    local ok, writer_stream = pcall(
-        function()
-            local check = xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
-            return xz.stream.xzwriter(xz.PRESET_DEFAULT, check)
-        end
+    local writer_stream, writer_stream_err = xz.stream.xzwriter(
+        xz.PRESET_DEFAULT,
+        xz.check.supported(xz.check.CRC64) and xz.check.CRC64 or xz.check.CRC32
     )
 
     -- an error occurred ?
-    if (not ok) then
+    if (not writer_stream) then
         -- raise the error
-        error(writer_stream)
+        error(writer_stream_err)
     end
 
     -- open / create a destination file to hold the compressed content
@@ -787,11 +745,7 @@ do
         -- execute the stream
         -- 
         -- tip: always check for errors
-        local ok, exec_err = pcall(
-            function()
-                writer_stream:exec(producer, consumer)
-            end
-        )
+        local ok, exec_err = writer_stream:exec(producer, consumer)
 
         -- an error occurred ?
         if (not ok) then
@@ -814,18 +768,20 @@ do
     -- close the output file
     output_file:close()
 end
---[[ end of encoding]]
+--[[ end of encoding ]]
 
 --[[ start of decoding ]]
 do
     -- create a xz reader stream
     -- 
     -- tip: always check for errors
-    local ok, reader_stream = pcall(
-        function()
-            return xz.stream.xzreader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
-        end
-    )
+    local reader_stream, reader_stream_err = xz.stream.xzreader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
+
+    -- an error occurred ?
+    if (not reader_stream) then
+        -- raise the error
+        error(reader_stream_err)
+    end
 
     -- open the file created above
     -- to feed the xz reader stream
@@ -863,11 +819,7 @@ do
         -- execute the stream
         -- 
         -- tip: always check for errors
-        local ok, exec_err = pcall(
-            function()
-                reader_stream:exec(producer, consumer)
-            end
-        )
+        local ok, exec_err = reader_stream:exec(producer, consumer)
 
         -- an error occurred ?
         if (not ok) then
@@ -890,7 +842,7 @@ do
     -- close the file
     input_file:close()
 end
---[[ end of decoding]]
+--[[ end of decoding ]]
 
 -- make sure that the decoded data
 -- after compression-decompression
@@ -960,7 +912,9 @@ A stream to decompress data from .lzma formatted content
 * *Signature*: ```xz.stream.lzmawriter(memlimit)```
 * *Parameters*: 
     * *memlimit* (```integer```): Memory usage limit as bytes. Use ```xz.MEMLIMIT_UNLIMITED``` to effectively disable the limiter;
-* *Return* (```userdata```): An instance of the stream reader class.
+* *Return* (`userdata`, `string`):
+    * first value (`userdata`): An instance of the stream reader class on success or `nil` on error.
+    * second value (`string`): An error message on error or `nil` on success.
 
 #### Instance methods
 
@@ -986,7 +940,9 @@ A stream to decompress data from .lzma formatted content
                     * *content* (```string```): the content generated by the stream;
                 * *Return* (```void```)
         * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes decompression faster, at a price of higher memory consumption;
-    * *Return* (```void```)
+    * *Return* (`boolean`, `string`)
+        * first value (`boolean`): `true` on success or `false` on error.
+        * second value (`string`): An error message on error or `nil` on success.
     * *Remark*: when the `producer` function returns `nil`, it signals the stream that no more data will be fed, and the stream shall finish. From this point on, only the `consumer` callback will be called.
 
 [Back to ToC](#table-of-contents)
@@ -1006,7 +962,9 @@ A stream to compress data to .lzma format
         * an integer: 0, ..., 9;
         * a string: "0", ..., "9";
         * a string: "0e", ..., "9e".
-* *Return* (```userdata```): An instance of the stream writer class.
+* *Return* (`userdata`, `string`):
+    * first value (`userdata`): An instance of the stream writer class on success or `nil` on error.
+    * second value (`string`): An error message on error or `nil` on success.
 
 #### Instance methods
 
@@ -1032,7 +990,9 @@ A stream to compress data to .lzma format
                     * *content* (```string```): the content generated by the stream;
                 * *Return* (```void```)
         * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes compression faster, at a price of higher memory consumption;
-    * *Return* (```void```)
+    * *Return* (`boolean`, `string`)
+        * first value (`boolean`): `true` on success or `false` on error.
+        * second value (`string`): An error message on error or `nil` on success.
     * *Remark*: when the `producer` function returns `nil`, it signals the stream that no more data will be fed, and the stream shall finish. From this point on, only the `consumer` callback will be called.
 
 [Back to ToC](#table-of-contents)
@@ -1050,7 +1010,9 @@ A stream to decompress data from .xz formatted content
 * *Parameters*: 
     * *memlimit* (```integer```): Memory usage limit as bytes. Use ```xz.MEMLIMIT_UNLIMITED``` to effectively disable the limiter;
     * *flags* (```integer```): Bitwise-or of zero or more of the decoder flags (for now, only ```xz.CONCATENATED``` is provided as constant);
-* *Return* (```userdata```): An instance of the stream reader class.
+* *Return* (`userdata`, `string`):
+    * first value (`userdata`): An instance of the stream reader class on success or `nil` on error.
+    * second value (`string`): An error message on error or `nil` on success.
 
 #### Instance methods
 
@@ -1076,7 +1038,9 @@ A stream to decompress data from .xz formatted content
                     * *content* (```string```): the content generated by the stream;
                 * *Return* (```void```)
         * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes decompression faster, at a price of higher memory consumption;
-    * *Return* (```void```)
+    * *Return* (`boolean`, `string`)
+        * first value (`boolean`): `true` on success or `false` on error.
+        * second value (`string`): An error message on error or `nil` on success.
     * *Remark*: when the `producer` function returns `nil`, it signals the stream that no more data will be fed, and the stream shall finish. From this point on, only the `consumer` callback will be called.
 
 [Back to ToC](#table-of-contents)
@@ -1097,7 +1061,9 @@ A stream to compress data to .xz format
         * a string: "0", ..., "9";
         * a string: "0e", ..., "9e".
     * *check* (```integer```): Type of the integrity check to calculate from uncompressed data. See [check constants](#constants) for all the possible values as constants;
-* *Return* (```userdata```): An instance of the stream writer class.
+* *Return* (`userdata`, `string`):
+    * first value (`userdata`): An instance of the stream writer class on success or `nil` on error.
+    * second value (`string`): An error message on error or `nil` on success.
 
 #### Instance methods
 
@@ -1123,7 +1089,9 @@ A stream to compress data to .xz format
                     * *content* (```string```): the content generated by the stream;
                 * *Return* (```void```)
         * *buffersize* (```integer | nil```): The size in bytes of the output buffer to allocate memory at stream execution. If no value is provided, it uses the value of ```LUA_XZ_BUFFER_SIZE``` from the [lua-xz.h](./src/lua-xz.h) header file. **Note**: choosing larger values for this parameter makes compression faster, at a price of higher memory consumption;
-    * *Return* (```void```)
+    * *Return* (`boolean`, `string`)
+        * first value (`boolean`): `true` on success or `false` on error.
+        * second value (`string`): An error message on error or `nil` on success.
     * *Remark*: when the `producer` function returns `nil`, it signals the stream that no more data will be fed, and the stream shall finish. From this point on, only the `consumer` callback will be called.
 
 [Back to ToC](#table-of-contents)
@@ -1165,6 +1133,9 @@ Holds constants and methods regarding the calculation of integrity checks during
 
 ## Change log
 
+* v1.0.0:
+    * Refactored the API to create streams to return two values: 1) the stream as the first value on success or `nil` on error; 2) an error message as the second value on error or `nil` on success;
+    * Refactored the API to execute the stream to return two values: 1) a boolean value (`true` means success and `false` error); 2) an error message as the second value on error or `nil` on success.
 * v0.0.1: Initial release
 
 ## Future works

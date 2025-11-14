@@ -20,16 +20,12 @@ local compressed_filename = filename .. ".lzma"
 --    * a string "0e", ..., "9e" (preset level + extreme modifier)
 -- 
 -- tip: always check for errors
-local ok, stream = pcall(
-    function()
-        return xz.stream.lzmawriter(xz.PRESET_DEFAULT)
-    end
-)
+local stream, stream_err = xz.stream.lzmawriter(xz.PRESET_DEFAULT)
 
 -- an error occurred ?
-if (not ok) then
+if (not stream) then
     -- raise the error
-    error(stream)
+    error(stream_err)
 end
 
 -- open the input file to feed
@@ -74,11 +70,7 @@ do
     -- execute the stream
     -- 
     -- tip: always check for errors
-    local ok, exec_err = pcall(
-        function()
-            stream:exec(producer, consumer)
-        end
-    )
+    local ok, exec_err = stream:exec(producer, consumer)
 
     -- an error occurred ?
     if (not ok) then

@@ -23,16 +23,12 @@ local decompressed_filename = "xz-copy-of-" .. (filename:gsub("%.xz$", ""))
 --       not only the first stream.
 -- 
 -- tip: always check for errors
-local ok, stream = pcall(
-    function()
-        return xz.stream.xzreader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
-    end
-)
+local stream, stream_err = xz.stream.xzreader(xz.MEMLIMIT_UNLIMITED, xz.CONCATENATED)
 
 -- an error occurred ?
-if (not ok) then
+if (not stream) then
     -- raise the error
-    error(stream)
+    error(stream_err)
 end
 
 -- open the input file to feed
@@ -77,11 +73,7 @@ do
     -- execute the stream
     -- 
     -- tip: always check for errors
-    local ok, exec_err = pcall(
-        function()
-            stream:exec(producer, consumer)
-        end
-    )
+    local ok, exec_err = stream:exec(producer, consumer)
 
     -- an error occurred ?
     if (not ok) then

@@ -26,20 +26,20 @@ jobs:
     defaults:
       run:
         shell: pwsh
-    
+
     strategy:
       matrix:
-        
+
         lua-version:
           - 5.1.5
           - 5.2.4
           - 5.3.6
-          - 5.4.7
-        
+          - 5.4.8
+
         use-clang:
           - 'true'
           - 'false'
-      
+
     steps:
 
       - name: Validate Lua version
@@ -51,15 +51,12 @@ jobs:
           }
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: lua-xz
 
       - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt upgrade -y
-          sudo apt install -y liblzma-dev libreadline-dev
+        run: sudo apt install -y liblzma-dev libreadline-dev
 
       - name: Install clang
         if: ${{ matrix.use-clang == 'true' }}
@@ -85,7 +82,7 @@ jobs:
           }
 
           $install_dir = Join-Path -Path "${{ runner.temp }}" -ChildPath "installed-lua-${{ matrix.lua-version }}";
-          
+
           if ("${{ matrix.use-clang }}" -eq "true")
           {
             Add-Content "${{ github.env }}" "CC=clang++";
@@ -96,13 +93,13 @@ jobs:
           }
           Add-Content "${{ github.env }}" "LUA_SRC_DIR=${lua_source_dir}";
           Add-Content "${{ github.env }}" "LUA_DIR=${install_dir}";
-      
+
       - name: Build Lua ${{ matrix.lua-version }}
         run: |
           make -C "${{ env.LUA_SRC_DIR }}" `
             linux `
             "CC=${{ env.CC }}";
-      
+
       - name: Install Lua ${{ matrix.lua-version }}, and set environment variables
         run: |
           make -C "${{ env.LUA_SRC_DIR }}" `
@@ -114,7 +111,7 @@ jobs:
 
           Add-Content "${{ github.path }}" "${lua_bindir}";
           Add-Content "${{ github.env }}" "LUA_INCDIR=${lua_incdir}";
-      
+
       - name: Compile lua-xz
         working-directory: lua-xz
         run: |
@@ -128,7 +125,7 @@ jobs:
             "-Isrc" `
             "-DLUA_XZ_BUILD_SHARED" `
             "src/lua-xz.c";
- 
+
       - name: Link lua-xz
         working-directory: lua-xz
         run: |
@@ -136,7 +133,7 @@ jobs:
             "-o" "lua-xz.so" `
             "src/lua-xz.o" `
             "-llzma";
- 
+
       - name: Run samples
         working-directory: lua-xz
         run: |
@@ -155,7 +152,7 @@ jobs:
                 exit 1;
               }
             };
-  
+
   clang-build:
     name: Clang Build
     runs-on: ubuntu-latest
@@ -163,16 +160,16 @@ jobs:
     defaults:
       run:
         shell: pwsh
-    
+
     strategy:
       matrix:
-        
+
         lua-version:
           - 5.1.5
           - 5.2.4
           - 5.3.6
-          - 5.4.7
-      
+          - 5.4.8
+
     steps:
 
       - name: Validate Lua version
@@ -184,15 +181,12 @@ jobs:
           }
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: lua-xz
 
       - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt upgrade -y
-          sudo apt install -y liblzma-dev libreadline-dev clang
+        run: sudo apt install -y liblzma-dev libreadline-dev clang
 
       - name: Download and extract Lua ${{ matrix.lua-version }} source code, and set environment variables
         run: |
@@ -214,17 +208,17 @@ jobs:
           }
 
           $install_dir = Join-Path -Path "${{ runner.temp }}" -ChildPath "installed-lua-${{ matrix.lua-version }}";
-          
+
           Add-Content "${{ github.env }}" "CC=clang";
           Add-Content "${{ github.env }}" "LUA_SRC_DIR=${lua_source_dir}";
           Add-Content "${{ github.env }}" "LUA_DIR=${install_dir}";
-      
+
       - name: Build Lua ${{ matrix.lua-version }}
         run: |
           make -C "${{ env.LUA_SRC_DIR }}" `
             linux `
             "CC=${{ env.CC }}";
-      
+
       - name: Install Lua ${{ matrix.lua-version }}, and set environment variables
         run: |
           make -C "${{ env.LUA_SRC_DIR }}" `
@@ -236,7 +230,7 @@ jobs:
 
           Add-Content "${{ github.path }}" "${lua_bindir}";
           Add-Content "${{ github.env }}" "LUA_INCDIR=${lua_incdir}";
-      
+
       - name: Compile lua-xz
         working-directory: lua-xz
         run: |
@@ -250,7 +244,7 @@ jobs:
             "-Isrc" `
             "-DLUA_XZ_BUILD_SHARED" `
             "src/lua-xz.c";
- 
+
       - name: Link lua-xz
         working-directory: lua-xz
         run: |
@@ -258,7 +252,7 @@ jobs:
             "-o" "lua-xz.so" `
             "src/lua-xz.o" `
             "-llzma";
- 
+
       - name: Run samples
         working-directory: lua-xz
         run: |
@@ -281,7 +275,7 @@ jobs:
   make-build:
     name: Makefiles Build
     runs-on: ${{ matrix.os }}
-    
+
     defaults:
       run:
         shell: pwsh
@@ -290,14 +284,14 @@ jobs:
       fail-fast: false
 
       matrix:
-        
+
         lua-version:
           - 5.1
           - 5.2
           - 5.3
           - 5.4
           - luajit
-          - luajit-openresty
+          - openresty
 
         os:
           - windows-latest
@@ -312,13 +306,13 @@ jobs:
     steps:
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: lua-xz
 
       - name: Setup MSVC dev-prompt
-        if: ${{ runner.os == 'Windows' && !startsWith(matrix.lua-version, 'luajit') }}
-        uses: ilammy/msvc-dev-cmd@v1
+        if: ${{ runner.os == 'Windows' && !contains(fromJson('["luajit", "openresty"]'), matrix.lua-version) }}
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download, extract, configure, build and install liblzma
         run: |
@@ -346,7 +340,7 @@ jobs:
             if ("${{ runner.os }}" -eq "Windows")
             {
               $install_prefix = "${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}";
-              if ("${{ matrix.lua-version }}".StartsWith("luajit"))
+              if ($${{ contains(fromJson('["luajit", "openresty"]'), matrix.lua-version) }})
               {
                 $cmake_generator = "MinGW Makefiles";
               }
@@ -384,9 +378,10 @@ jobs:
           Add-Content "${{ github.path }}" "${install_prefix_bin}";
 
       - name: Setup Lua
-        uses: luarocks/gh-actions-lua@v10
+        uses: luau-project/setup-lua@48961279fba711f39fa539a4903b1ac66153b694 # v1.0.0
         with:
-          luaVersion: ${{ matrix.lua-version }}
+          lua-version: ${{ matrix.lua-version }}
+          luarocks-version: none
 
       - name: Build and install lua-xz
         working-directory: lua-xz
@@ -395,7 +390,7 @@ jobs:
 
           if ("${{ runner.os }}" -eq "Windows")
           {
-            if ("${{ matrix.lua-version }}".StartsWith("luajit"))
+            if ($${{ contains(fromJson('["luajit", "openresty"]'), matrix.lua-version) }})
             {
               $lua_lib = Get-ChildItem "${lua_dir}" -Recurse -File |
                 Where-Object Extension -EQ ".dll" |
@@ -481,8 +476,8 @@ jobs:
 
               if ("${{ matrix.lua-version }}" -match "^(\d+)\.(\d+)$")
               {
-                $lua_major_ver = $Matches.1;
-                $lua_minor_ver = $Matches.2;
+                $lua_major_ver = $Matches[1];
+                $lua_minor_ver = $Matches[2];
               }
               else
               {
@@ -562,7 +557,7 @@ jobs:
   build:
     name: Build
     runs-on: ${{ matrix.os }}
-    
+
     defaults:
       run:
         shell: pwsh
@@ -571,14 +566,14 @@ jobs:
       fail-fast: false
 
       matrix:
-        
+
         lua-version:
           - 5.1
           - 5.2
           - 5.3
           - 5.4
           - luajit
-          - luajit-openresty
+          - openresty
 
         os:
           - windows-latest
@@ -608,13 +603,13 @@ jobs:
           }
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: lua-xz
 
       - name: Restore Linux Kernel tarball
         id: restore-linux-kernel-tarball
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: "lua-xz/linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}.tar.xz"
           key: "linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}"
@@ -625,14 +620,14 @@ jobs:
 
       - name: Save Linux Kernel tarball
         if: ${{ steps.restore-linux-kernel-tarball.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: "lua-xz/linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}.tar.xz"
           key: "linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}"
 
       - name: Setup MSVC dev-prompt
-        if: ${{ runner.os == 'Windows' && !startsWith(matrix.lua-version, 'luajit') }}
-        uses: ilammy/msvc-dev-cmd@v1
+        if: ${{ runner.os == 'Windows' && !contains(fromJson('["luajit", "openresty"]'), matrix.lua-version) }}
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download, extract, configure, build and install liblzma
         run: |
@@ -640,10 +635,10 @@ jobs:
           Invoke-WebRequest `
             -Uri "https://github.com/tukaani-project/xz/releases/download/v${{ env.LIBLZMA_WINDOWS_VERSION }}/xz-${{ env.LIBLZMA_WINDOWS_VERSION }}.tar.gz" `
             -OutFile "$tarball";
-          
+
           tar -C "${{ runner.temp }}" -xf "${tarball}";
           $extracted_dir = Join-Path -Path "${{ runner.temp }}" -ChildPath "xz-${{ env.LIBLZMA_WINDOWS_VERSION }}";
-          
+
           if ("${{ runner.os }}" -eq "macOS")
           {
             cd "${extracted_dir}";
@@ -656,11 +651,11 @@ jobs:
             $build_dir = Join-Path -Path "${{ runner.temp }}" -ChildPath "build-xz";
             $cmake_generator = "Unix Makefiles";
             $install_prefix = "/usr/local";
-          
+
             if ("${{ runner.os }}" -eq "Windows")
             {
               $install_prefix = "${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}";
-              if ("${{ matrix.lua-version }}".StartsWith("luajit"))
+              if ($${{ contains(fromJson('["luajit", "openresty"]'), matrix.lua-version) }})
               {
                 $cmake_generator = "MinGW Makefiles";
               }
@@ -669,7 +664,7 @@ jobs:
                 $cmake_generator = "NMake Makefiles";
               }
             }
-            
+
             cmake `
               -G "${cmake_generator}" `
               -DCMAKE_BUILD_TYPE=Release `
@@ -677,9 +672,9 @@ jobs:
               --install-prefix "${install_prefix}" `
               -S "${extracted_dir}" `
               -B "${build_dir}";
-            
+
             cmake --build "${build_dir}" --config Release;
-            
+
             if ("${{ runner.os }}" -eq "Windows")
             {
               cmake --install "${build_dir}" --config Release;
@@ -729,13 +724,10 @@ jobs:
           Add-Content "${{ github.env }}" "LINUX_KERNEL_TAR_XZ=${tarxz_file}";
 
       - name: Setup Lua
-        uses: luarocks/gh-actions-lua@v10
+        uses: luau-project/setup-lua@48961279fba711f39fa539a4903b1ac66153b694 # v1.0.0
         with:
-          luaVersion: ${{ matrix.lua-version }}
+          lua-version: ${{ matrix.lua-version }}
 
-      - name: Setup LuaRocks
-        uses: luarocks/gh-actions-luarocks@v5
-      
       - name: Lint rockspecs
         working-directory: lua-xz
         run: |
@@ -867,35 +859,35 @@ jobs:
 
     strategy:
       matrix:
-        
-        MSYS2_CONFIG:
+
+        MSYS2-CONFIG:
           - { sys: mingw64, env: x86_64 }
           - { sys: ucrt64, env: ucrt-x86_64 }
           - { sys: clang64, env: clang-x86_64 }
-        
+
         Lua:
           - { version: '5.4', msys2-pkg-name: 'lua', msys2-lua-interpreter: 'lua' }
           - { version: '5.3', msys2-pkg-name: 'lua53', msys2-lua-interpreter: 'lua5.3' }
           - { version: '5.1', msys2-pkg-name: 'lua51', msys2-lua-interpreter: 'lua5.1' }
           - { version: '5.1', msys2-pkg-name: 'luajit', msys2-lua-interpreter: 'luajit' }
-      
+
     env:
-      LUA_INTERPRETER: /${{ matrix.MSYS2_CONFIG.sys }}/bin/${{ matrix.Lua.msys2-lua-interpreter }}
+      LUA_INTERPRETER: /${{ matrix.MSYS2-CONFIG.sys }}/bin/${{ matrix.Lua.msys2-lua-interpreter }}
 
     steps:
 
       - name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@fb197b72ce45fb24f17bf3f807a388985654d1f2 # v2.29.0
         with:
-          msystem: ${{ matrix.MSYS2_CONFIG.sys }}
+          msystem: ${{ matrix.MSYS2-CONFIG.sys }}
           install: |
             base-devel
             git
-            mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-cc
-            mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-${{ matrix.Lua.msys2-pkg-name }}
-            mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-lua-luarocks
-            mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-xz
-      
+            mingw-w64-${{ matrix.MSYS2-CONFIG.env }}-cc
+            mingw-w64-${{ matrix.MSYS2-CONFIG.env }}-${{ matrix.Lua.msys2-pkg-name }}
+            mingw-w64-${{ matrix.MSYS2-CONFIG.env }}-lua-luarocks
+            mingw-w64-${{ matrix.MSYS2-CONFIG.env }}-xz
+
       - name: Set environment variable to hold the rockspec name
         run: |
           if [[ "${{ github.repository }}" == "luau-project/lua-xz" ]] && [[ "${{ github.ref_name }}" == "v${{ env.ROCKSPEC_VERSION }}" ]] && [[ "${{ github.ref }}" == "refs/tags/v${{ env.ROCKSPEC_VERSION }}" ]];
@@ -904,20 +896,20 @@ jobs:
           else
             echo "ROCKSPEC=${{ env.DEV_ROCKSPEC }}" >> "${{ github.env }}";
           fi;
-      
+
       - name: Configure LuaRocks
         run: |
           source /etc/makepkg_mingw.conf
-          echo "CC=/${{ matrix.MSYS2_CONFIG.sys }}/bin/${CC}" >> "${{ github.env }}"
+          echo "CC=/${{ matrix.MSYS2-CONFIG.sys }}/bin/${CC}" >> "${{ github.env }}"
           echo "CFLAGS=${CFLAGS}" >> "${{ github.env }}"
           luarocks config lua_version "${{ matrix.Lua.version }}"
-          luarocks config lua_dir "/${{ matrix.MSYS2_CONFIG.sys }}"
+          luarocks config lua_dir "/${{ matrix.MSYS2-CONFIG.sys }}"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: lua-xz
-      
+
       - name: Lint rockspecs
         working-directory: lua-xz
         run: |
@@ -926,7 +918,7 @@ jobs:
             echo -e "Linting rockspec: \e[36m${rockspec}\e[0m";
             luarocks lint "${rockspec}";
           done;
-  
+
       - name: Build lua-xz
         working-directory: lua-xz
         run: |
@@ -934,7 +926,7 @@ jobs:
           echo -e "Building rockspec: \e[36m${rockspec}\e[0m";
 
           luarocks make ${rockspec};
-      
+
       - name: Run samples
         working-directory: lua-xz
         run: |
@@ -944,13 +936,13 @@ jobs:
 
             ${{ env.LUA_INTERPRETER }} $sample;
           done;
-  
+
   cygwin-build:
     name: Cygwin Build
     runs-on: windows-latest
 
     env:
-      LUAROCKS_VERSION: 3.11.1
+      LUAROCKS_VERSION: 3.12.2
       CYGWIN_NOWINPATH: 1
       CHERE_INVOKING: 1
       CYGWIN_INSTALL_DIR: C:\cygwin64
@@ -966,17 +958,17 @@ jobs:
           {
             Add-Content "${{ github.env }}" "ROCKSPEC=${{ env.DEV_ROCKSPEC }}";
           }
-    
+
       - name: Override git autocrlf to input before checkout
         run: git config --global core.autocrlf input
-      
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: lua-xz
-      
+
       - name: Setup Cygwin
-        uses: cygwin/cygwin-install-action@v5
+        uses: cygwin/cygwin-install-action@f61179d72284ceddc397ed07ddb444d82bf9e559 # v5
         with:
           platform: x86_64
           install-dir: ${{ env.CYGWIN_INSTALL_DIR }}
@@ -990,101 +982,37 @@ jobs:
             liblua-devel,
             unzip,
             liblzma-devel
-      
+
       - name: Set environment variables to hold Cygwin applications for usage from pwsh
         run: |
           $bash = Join-Path -Path ${{ env.CYGWIN_INSTALL_DIR }} -ChildPath "bin" |
             Join-Path -ChildPath "bash";
           $cygpath = Join-Path -Path ${{ env.CYGWIN_INSTALL_DIR }} -ChildPath "bin" |
             Join-Path -ChildPath "cygpath";
-          
+
           Add-Content "${{ github.env }}" "CYGWIN_BASH=${bash}";
-          Add-Content "${{ github.env }}" "CYGWIN_CYGPATH=${cygpath}";
-
-      - name: Create a patch to apply to LuaRocks tarball
-        run: |
-          $cygwin_patch = "diff -Naur a/GNUmakefile b/GNUmakefile",                                             
-          "--- a/GNUmakefile    2024-05-31 14:38:00.000000000 -0300",                                           
-          "+++ b/GNUmakefile    2025-02-05 18:48:47.060175879 -0300",                                           
-          "@@ -8,7 +8,7 @@",                                                                                    
-          " INSTALL_DATA = `$(INSTALL) -m 644",                                                                 
-          " BINARY_PLATFORM = unix",                                                                            
-          " ",                                                                                                  
-          "-SHEBANG = \#!`$(LUA)",                                                                              
-          "+SHEBANG = \#!/bin/env lua",                                                                         
-          " luarocksconfdir = `$(sysconfdir)/luarocks",                                                         
-          " luadir = `$(datarootdir)/lua/`$(LUA_VERSION)",                                                      
-          " builddir = ./build",                                                                                
-          "diff -Naur a/src/luarocks/core/cfg.lua b/src/luarocks/core/cfg.lua",                                 
-          "--- a/src/luarocks/core/cfg.lua  2024-05-31 14:38:00.000000000 -0300",                               
-          "+++ b/src/luarocks/core/cfg.lua  2025-02-05 18:46:26.771098947 -0300",                               
-          "@@ -413,13 +413,24 @@",                                                                              
-          "    end",                                                                                            
-          " ",                                                                                                  
-          "    if platforms.cygwin then",                                                                       
-          "-      defaults.lib_extension = ""so"" -- can be overridden in the config file for mingw builds",    
-          "+      defaults.lib_extension = ""dll"" -- can be overridden in the config file for mingw builds",   
-          "       defaults.arch = ""cygwin-""..target_cpu",                                                     
-          "       defaults.cmake_generator = ""Unix Makefiles""",                                               
-          "       defaults.variables.CC = ""echo -llua | xargs "" .. (os.getenv(""CC"") or ""gcc"")",           
-          "       defaults.variables.LD = ""echo -llua | xargs "" .. (os.getenv(""CC"") or ""gcc"")",           
-          "       defaults.variables.LIBFLAG = ""-shared""",                                                    
-          "       defaults.link_lua_explicitly = true",                                                         
-          "+      defaults.external_deps_patterns = {",                                                         
-          "+         bin = { ""?.exe"", ""?.bat"", ""?"" },",                                                   
-          "+         lib = { ""lib?.so"", ""lib?.so.*"", ""lib?.dll.a"", ""?.dll.a"",",                         
-          "+                 ""lib?.a"", ""lib?.dll"", ""?.dll"", ""?.lib"" },",                                
-          "+         include = { ""?.h"" }",                                                                    
-          "+      }",                                                                                           
-          "+      defaults.runtime_external_deps_patterns = {",                                                 
-          "+         bin = { ""?.exe"", ""?.bat"" },",                                                          
-          "+         lib = { ""lib?.so"", ""?.dll"", ""lib?.dll"" },",                                          
-          "+         include = { ""?.h"" }",                                                                    
-          "+      }",                                                                                           
-          "    end",                                                                                            
-          " ",                                                                                                  
-          "    if platforms.msys then",                                                                         
-          "";
-
-          $cygwin_patch_content = $cygwin_patch |
-            Join-String -Separator "`n";
-
-          $patch_path = Join-Path -Path "${{ runner.temp }}" -ChildPath "cygwin-luarocks-3.11.1.patch";
-          
-          Set-Content $patch_path $cygwin_patch_content -NoNewline;
-          
-          $cygwinpath_for_patch = ${{ env.CYGWIN_CYGPATH }} $patch_path;
-          Add-Content "${{ github.env }}" "CYGWIN_PATCH_FILENAME=${cygwinpath_for_patch}";
-          Add-Content "${{ github.env }}" "PWSH_CYGWIN_PATCH_FILENAME=${patch_path}";
 
       - name: Download, configure and install LuaRocks
         run: |
           $color = (0x1b -as [char]) + "[36m";
 
-          Write-Host "Downloading LuaRocks from ${color}https://luarocks.org/releases/luarocks-${{ env.LUAROCKS_VERSION }}.tar.gz";          
-          ${{ env.CYGWIN_BASH }} -lc "wget https://luarocks.org/releases/luarocks-${{ env.LUAROCKS_VERSION }}.tar.gz -P/tmp";
+          Write-Host "Downloading LuaRocks from ${color}https://luarocks.github.io/luarocks/releases/luarocks-${{ env.LUAROCKS_VERSION }}.tar.gz";          
+          ${{ env.CYGWIN_BASH }} -lc "wget https://luarocks.github.io/luarocks/releases/luarocks-${{ env.LUAROCKS_VERSION }}.tar.gz -P/tmp";
 
           Write-Host "Extracting LuaRocks tarball: ${color}/tmp/luarocks-${{ env.LUAROCKS_VERSION }}.tar.gz";
           ${{ env.CYGWIN_BASH }} -lc "tar -C /tmp -xf /tmp/luarocks-${{ env.LUAROCKS_VERSION }}.tar.gz";
 
-          Write-Host "Patching LuaRocks with ${color}${{ env.CYGWIN_PATCH_FILENAME }}";
-          Write-Host "    which has the following content:";
-
-          $color_patch_content = (0x1b -as [char]) + "[33m";
-          Get-Content "${{ env.PWSH_CYGWIN_PATCH_FILENAME }}" | ForEach-Object { Write-Host "${color_patch_content}$_"; }
-          ${{ env.CYGWIN_BASH }} -lc "cd /tmp/luarocks-${{ env.LUAROCKS_VERSION }} && patch -Np1 -i ""${{ env.CYGWIN_PATCH_FILENAME }}""";
-
           Write-Host "Configuring, making and installing LuaRocks at ${color}/usr";
-          ${{ env.CYGWIN_BASH }} -lc "cd /tmp/luarocks-${{ env.LUAROCKS_VERSION }} && ./configure --prefix=/usr && make && make install";
+          ${{ env.CYGWIN_BASH }} -lc "cd /tmp/luarocks-${{ env.LUAROCKS_VERSION }} && ./configure --prefix=/usr && make SHEBANG='#!env lua' && make install";
 
           Write-Host "Writing a shell entry loading LuaRocks variables to file: ${color}/etc/profile.d/luarocks.sh";
           ${{ env.CYGWIN_BASH }} -lc "echo 'eval `$(luarocks path)' > /etc/profile.d/luarocks.sh";
-      
+
       - name: Lint rockspecs
         working-directory: lua-xz
         run: |
           ${{ env.CYGWIN_BASH }} -lc "for rockspec in rockspecs/*.rockspec; do echo -e ""Linting rockspec: \e[36m`${rockspec}\e[0m""; luarocks lint ""`${rockspec}""; done";
-  
+
       - name: Build lua-xz
         working-directory: lua-xz
         run: |

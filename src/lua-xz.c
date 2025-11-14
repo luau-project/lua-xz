@@ -277,7 +277,9 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
     ud = lua_newuserdata(L, sizeof(lua_xz_stream));
     if (ud == NULL)
     {
-        return luaL_error(L, "Failed to create lua_xz_stream userdata");
+        lua_pushnil(L);
+        lua_pushstring(L, "Failed to create lua_xz_stream userdata");
+        return 2;
     }
 
     luaL_getmetatable(L, LUA_XZ_STREAM_METATABLE);
@@ -313,7 +315,9 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
         }
         else
         {
-            return luaL_error(L, "Invalid preset type");
+            lua_pushnil(L);
+            lua_pushstring(L, "Invalid preset type");
+            return 2;
         }
 
         if (is_xz)
@@ -331,15 +335,35 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
                 switch (ret)
                 {
                 case LZMA_MEM_ERROR:
-                    return luaL_error(L, "Memory allocation failed");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "Memory allocation failed");
+                    return 2;
+                }
                 case LZMA_OPTIONS_ERROR:
-                    return luaL_error(L, "The given compression preset is not supported by this build of liblzma");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "The given compression preset is not supported by this build of liblzma");
+                    return 2;
+                }
                 case LZMA_UNSUPPORTED_CHECK:
-                    return luaL_error(L, "The given check type is not supported by this build of liblzma");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "The given check type is not supported by this build of liblzma");
+                    return 2;
+                }
                 case LZMA_PROG_ERROR:
-                    return luaL_error(L, "One or more of the parameters have values that will never be valid");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "One or more of the parameters have values that will never be valid");
+                    return 2;
+                }
                 default:
-                    return luaL_error(L, "Failed to create lzma_easy_encoder");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "Failed to create lzma_easy_encoder");
+                    return 2;
+                }
                 }
             }
         }
@@ -347,7 +371,9 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
         {
             if (lzma_lzma_preset(&stream->opt_lzma, preset))
             {
-                return luaL_error(L, "Unsupported preset");
+                lua_pushnil(L);
+                lua_pushstring(L, "Unsupported preset");
+                return 2;
             }
 
             ret = lzma_alone_encoder(&stream->strm, (const lzma_options_lzma *)&stream->opt_lzma);
@@ -357,13 +383,29 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
                 switch (ret)
                 {
                 case LZMA_MEM_ERROR:
-                    return luaL_error(L, "Memory allocation failed");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "Memory allocation failed");
+                    return 2;
+                }
                 case LZMA_OPTIONS_ERROR:
-                    return luaL_error(L, "The given compression preset is not supported by this build of liblzma");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "The given compression preset is not supported by this build of liblzma");
+                    return 2;
+                }
                 case LZMA_PROG_ERROR:
-                    return luaL_error(L, "One or more of the parameters have values that will never be valid");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "One or more of the parameters have values that will never be valid");
+                    return 2;
+                }
                 default:
-                    return luaL_error(L, "Failed to create lzma_alone_encoder");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "Failed to create lzma_alone_encoder");
+                    return 2;
+                }
                 }
             }
         }
@@ -403,11 +445,23 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
                 switch (ret)
                 {
                 case LZMA_MEM_ERROR:
-                    return luaL_error(L, "Memory allocation failed");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "Memory allocation failed");
+                    return 2;
+                }
                 case LZMA_OPTIONS_ERROR:
-                    return luaL_error(L, "Unsupported decompressor flags");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "Unsupported decompressor flags");
+                    return 2;
+                }
                 default:
-                    return luaL_error(L, "Failed to create lzma_stream_decoder");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "Failed to create lzma_stream_decoder");
+                    return 2;
+                }
                 }
             }
         }
@@ -422,17 +476,30 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
                 switch (ret)
                 {
                 case LZMA_MEM_ERROR:
-                    return luaL_error(L, "Memory allocation failed");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "Memory allocation failed");
+                    return 2;
+                }
                 case LZMA_OPTIONS_ERROR:
-                    return luaL_error(L, "Unsupported decompressor flags");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "Unsupported decompressor flags");
+                    return 2;
+                }
                 default:
-                    return luaL_error(L, "Failed to create lzma_alone_decoder");
+                {
+                    lua_pushnil(L);
+                    lua_pushstring(L, "Failed to create lzma_alone_decoder");
+                    return 2;
+                }
                 }
             }
         }
     }
 
-    return 1;
+    lua_pushnil(L);
+    return 2;
 }
 
 /*
@@ -513,7 +580,9 @@ static int lua_xz_stream_exec(lua_State *L)
 
     if (arg_output_buffer_size <= 0)
     {
-        return luaL_error(L, "Buffer size must be a positive integer");
+        lua_pushboolean(L, 0);
+        lua_pushstring(L, "Buffer size must be a positive integer");
+        return 2;
     }
 
     output_buffer_size = (size_t)arg_output_buffer_size;
@@ -593,7 +662,9 @@ static int lua_xz_stream_exec(lua_State *L)
                     /* remove the produced data */
                     lua_pop(L, 1);
                     lua_xz_stream_exec_free_aux_buffers(L, buffers_index);
-                    return luaL_error(L, "Produced data must be a string or nil (to finish the stream)");
+                    lua_pushboolean(L, 0);
+                    lua_pushstring(L, "Produced data must be a string or nil (to finish the stream)");
+                    return 2;
                 }
 
                 /* remove the produced data */
@@ -602,7 +673,9 @@ static int lua_xz_stream_exec(lua_State *L)
             else
             {
                 lua_xz_stream_exec_free_aux_buffers(L, buffers_index);
-                return luaL_error(L, lua_tostring(L, -1));
+                lua_pushboolean(L, 0);
+                lua_pushstring(L, lua_tostring(L, -1));
+                return 2;
             }
         }
 
@@ -629,7 +702,9 @@ static int lua_xz_stream_exec(lua_State *L)
             else
             {
                 lua_xz_stream_exec_free_aux_buffers(L, buffers_index);
-                return luaL_error(L, lua_tostring(L, -1));
+                lua_pushboolean(L, 0);
+                lua_pushstring(L, lua_tostring(L, -1));
+                return 2;
             }
         }
 
@@ -639,7 +714,9 @@ static int lua_xz_stream_exec(lua_State *L)
 
             if (ret == LZMA_STREAM_END)
             {
-                return 0;
+                lua_pushboolean(L, 1);
+                lua_pushnil(L);
+                return 2;
             }
 
             if (stream->is_writer)
@@ -647,11 +724,23 @@ static int lua_xz_stream_exec(lua_State *L)
                 switch (ret)
                 {
                 case LZMA_MEM_ERROR:
-                    return luaL_error(L, "Memory allocation failed in the writer stream");
+                {
+                    lua_pushboolean(L, 0);
+                    lua_pushstring(L, "Memory allocation failed in the writer stream");
+                    return 2;
+                }
                 case LZMA_DATA_ERROR:
-                    return luaL_error(L, "File size limits exceeded");
+                {
+                    lua_pushboolean(L, 0);
+                    lua_pushstring(L, "File size limits exceeded");
+                    return 2;
+                }
                 default:
-                    return luaL_error(L, "Unknown error, possibly a bug in the writer stream");
+                {
+                    lua_pushboolean(L, 0);
+                    lua_pushstring(L, "Unknown error, possibly a bug in the writer stream");
+                    return 2;
+                }
                 }
             }
             else
@@ -659,23 +748,49 @@ static int lua_xz_stream_exec(lua_State *L)
                 switch (ret)
                 {
                 case LZMA_MEM_ERROR:
-                    return luaL_error(L, "Memory allocation failed in the reader stream");
+                {
+                    lua_pushboolean(L, 0);
+                    lua_pushstring(L, "Memory allocation failed in the reader stream");
+                    return 2;
+                }
                 case LZMA_FORMAT_ERROR:
-                    return luaL_error(L, "The input is not in the .xz format");
+                {
+                    lua_pushboolean(L, 0);
+                    lua_pushstring(L, "The input is not in the correct format");
+                    return 2;
+                }
                 case LZMA_OPTIONS_ERROR:
-                    return luaL_error(L, "Unsupported compression options");
+                {
+                    lua_pushboolean(L, 0);
+                    lua_pushstring(L, "Unsupported compression options");
+                    return 2;
+                }
                 case LZMA_DATA_ERROR:
-                    return luaL_error(L, "Compressed file is corrupt");
+                {
+                    lua_pushboolean(L, 0);
+                    lua_pushstring(L, "Compressed file is corrupt");
+                    return 2;
+                }
                 case LZMA_BUF_ERROR:
-                    return luaL_error(L, "Compressed file is truncated or otherwise corrupt");
+                {
+                    lua_pushboolean(L, 0);
+                    lua_pushstring(L, "Compressed file is truncated or otherwise corrupt");
+                    return 2;
+                }
                 default:
-                    return luaL_error(L, "Unknown error, possibly a bug in the reader stream");
+                {
+                    lua_pushboolean(L, 0);
+                    lua_pushstring(L, "Unknown error, possibly a bug in the reader stream");
+                    return 2;
+                }
                 }
             }
         }
     }
 
-    return 0;
+    lua_pushboolean(L, 1);
+    lua_pushnil(L);
+    return 2;
 }
 
 static int lua_xz_stream_xzwriter(lua_State *L)
