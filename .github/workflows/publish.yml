@@ -3,7 +3,7 @@ name: Publish to LuaRocks
 on: workflow_dispatch
 
 env:
-  ROCKSPEC_VERSION: 0.0.1
+  ROCKSPEC_VERSION: 1.0.0
 
 jobs:
   upload-rockspec:

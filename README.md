@@ -907,7 +907,7 @@ assert(
 
 | Key | Type | Description |
 |---|---|---|
-| version | string | Version of the binding (e.g.: 0.0.1) |
+| version | string | Version of the binding (e.g.: 1.0.0) |
 | _VERSION | string | Version of the underlying ```liblzma``` library (e.g.: 5.8.1) |
 | MEMLIMIT_UNLIMITED | integer | A custom value in Lua to disable a memory limit |
 | CONCATENATED | integer | Flag to enable decoding of concatenated streams |

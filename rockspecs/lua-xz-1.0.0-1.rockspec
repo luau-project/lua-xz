@@ -1,9 +1,10 @@
 package = "lua-xz"
-local raw_version = "dev"
+local raw_version = "1.0.0"
 version = raw_version .. "-1"
 
 source = {
-   url = "git+https://github.com/luau-project/lua-xz.git"
+   url = "git+https://github.com/luau-project/lua-xz.git",
+   tag = "v" .. raw_version
 }
 
 description = {

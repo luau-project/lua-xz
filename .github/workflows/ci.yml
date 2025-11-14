@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 env:
-  ROCKSPEC_VERSION: 0.0.1
+  ROCKSPEC_VERSION: 1.0.0
   DEV_ROCKSPEC: lua-xz-dev-1.rockspec
   LUAROCKS_WINDOWS_DEPS_DIR: C:\external
   LIBLZMA_WINDOWS_VERSION: 5.8.1
