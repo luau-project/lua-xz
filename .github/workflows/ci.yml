@@ -378,7 +378,7 @@ jobs:
           Add-Content "${{ github.path }}" "${install_prefix_bin}";
 
       - name: Setup Lua
-        uses: luau-project/setup-lua@48961279fba711f39fa539a4903b1ac66153b694 # v1.0.0
+        uses: luau-project/setup-lua@33cb647d06c5598719d6775b7d9ffa4211a351bd # v1.0.2
         with:
           lua-version: ${{ matrix.lua-version }}
           luarocks-version: none
@@ -458,7 +458,7 @@ jobs:
             else
             {
               $lua_lib = Get-ChildItem "${lua_dir}" -Recurse -File |
-                Where-Object Extension -EQ ".lib" |
+                Where-Object Name -Match "lua\d+\.lib" |
                 Select-Object -ExpandProperty Name -First 1;
 
               if ($lua_lib -eq $null -or $lua_lib -eq "")
@@ -587,7 +587,7 @@ jobs:
       # to test the behavior of lua-xz
       # on huge files.
       LINUX_KERNEL_MAJOR_VERSION: 6
-      LINUX_KERNEL_MINOR_VERSION: 14
+      LINUX_KERNEL_MINOR_VERSION: 17
 
     steps:
 
@@ -724,7 +724,7 @@ jobs:
           Add-Content "${{ github.env }}" "LINUX_KERNEL_TAR_XZ=${tarxz_file}";
 
       - name: Setup Lua
-        uses: luau-project/setup-lua@48961279fba711f39fa539a4903b1ac66153b694 # v1.0.0
+        uses: luau-project/setup-lua@33cb647d06c5598719d6775b7d9ffa4211a351bd # v1.0.2
         with:
           lua-version: ${{ matrix.lua-version }}
 
