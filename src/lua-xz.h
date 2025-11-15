@@ -43,33 +43,33 @@
 #define LUA_XZ_BUFFER_SIZE LUAL_BUFFERSIZE
 #endif
 
-#ifndef LUA_XZ_EXPORT /* { */
-#ifdef LUA_XZ_BUILD_STATIC /* { */
+#ifndef LUA_XZ_EXPORT
+#ifdef LUA_XZ_BUILD_STATIC
 #define LUA_XZ_EXPORT
-#else /* }{ */
-#ifdef LUA_XZ_BUILD_SHARED /* { */
-#if defined(_WIN32) /* { */
-#if defined(__GNUC__) || defined(__MINGW32__) /* { */
+#else
+#ifdef LUA_XZ_BUILD_SHARED
+#if defined(_WIN32)
+#if defined(__GNUC__) || defined(__MINGW32__)
 #define LUA_XZ_EXPORT __attribute__((dllexport))
-#else /* }{ */
+#else
 #define LUA_XZ_EXPORT __declspec(dllexport)
-#endif /* } */
-#else /* }{ */
+#endif
+#else
 #define LUA_XZ_EXPORT __attribute__((visibility("default")))
-#endif /* } */
-#else /* }{ */
-#if defined(_WIN32) /* { */
-#if defined(__GNUC__) || defined(__MINGW32__) /* { */
+#endif
+#else
+#if defined(_WIN32)
+#if defined(__GNUC__) || defined(__MINGW32__)
 #define LUA_XZ_EXPORT __attribute__((dllimport))
-#else /* }{ */
+#else
 #define LUA_XZ_EXPORT __declspec(dllimport)
-#endif /* } */
-#else /* }{ */
+#endif
+#else
 #define LUA_XZ_EXPORT
-#endif /* } */
-#endif /* } */
-#endif /* } */
-#endif /* } */
+#endif
+#endif
+#endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {

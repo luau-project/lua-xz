@@ -324,7 +324,7 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
         {
             arg_check = luaL_checkinteger(L, 2);
             check = (lzma_check)arg_check;
-    
+
             ret = lzma_easy_encoder(
                 &stream->strm,
                 preset,
@@ -439,7 +439,7 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
                 &stream->strm,
                 memlimit,
                 flags);
-    
+
             if (ret != LZMA_OK)
             {
                 switch (ret)
@@ -470,7 +470,7 @@ static int lua_xz_stream_new(lua_State *L, int is_xz, int is_writer)
             ret = lzma_alone_decoder(
                 &stream->strm,
                 memlimit);
-    
+
             if (ret != LZMA_OK)
             {
                 switch (ret)
@@ -611,7 +611,7 @@ static int lua_xz_stream_exec(lua_State *L)
         {
             /* push the producer function */
             lua_pushvalue(L, 2);
-            
+
             if (lua_pcall(L, 0, 1, 0) == 0)
             {
                 produced_data_type = lua_type(L, -1);
@@ -674,7 +674,7 @@ static int lua_xz_stream_exec(lua_State *L)
             {
                 lua_xz_stream_exec_free_aux_buffers(L, buffers_index);
                 lua_pushboolean(L, 0);
-                lua_pushstring(L, lua_tostring(L, -1));
+                lua_pushstring(L, "An error occurred during the execution of the producer function. Please, fix your producer function.");
                 return 2;
             }
         }
@@ -703,7 +703,7 @@ static int lua_xz_stream_exec(lua_State *L)
             {
                 lua_xz_stream_exec_free_aux_buffers(L, buffers_index);
                 lua_pushboolean(L, 0);
-                lua_pushstring(L, lua_tostring(L, -1));
+                lua_pushstring(L, "An error occurred during the execution of the consumer function. Please, fix your consumer function.");
                 return 2;
             }
         }
