@@ -39,11 +39,11 @@ set(_LUA_XZ_DEF_FILE "${CMAKE_CURRENT_SOURCE_DIR}/lua-xz.def")
 set(_LUA_XZ_SHARED_LIB_FILES "${_LUA_XZ_SOURCE_C_FILES}")
 set(_LUA_XZ_TESTS_FILES
     "${_LUA_XZ_TESTS_DIR}/lzma-compress-readme.lua"
-    "${_LUA_XZ_TESTS_DIR}/xz-compress-readme.lua"
-    "${_LUA_XZ_TESTS_DIR}/lzma-simulate-compression-in-chunks.lua"
-    "${_LUA_XZ_TESTS_DIR}/xz-decompress-copy-of-readme.lua"
-    "${_LUA_XZ_TESTS_DIR}/test-constants.lua"
     "${_LUA_XZ_TESTS_DIR}/lzma-decompress-copy-of-readme.lua"
+    "${_LUA_XZ_TESTS_DIR}/lzma-simulate-compression-in-chunks.lua"
+    "${_LUA_XZ_TESTS_DIR}/test-constants.lua"
+    "${_LUA_XZ_TESTS_DIR}/xz-compress-readme.lua"
+    "${_LUA_XZ_TESTS_DIR}/xz-decompress-copy-of-readme.lua"
     "${_LUA_XZ_TESTS_DIR}/xz-simulate-compression-in-chunks.lua"
 )
 set(_LUA_XZ_CLEAN_TESTS_FILES
@@ -233,8 +233,16 @@ elseif (APPLE)
     set_target_properties(lua-xz-shared
         PROPERTIES
         SUFFIX ".so"
-        LINK_FLAGS " -undefined dynamic_lookup -all_load "
     )
+    if ("${CMAKE_VERSION}" VERSION_LESS "3.13")
+        set_target_properties(lua-xz-shared
+            PROPERTIES
+            LINK_FLAGS " -undefined dynamic_lookup -all_load "
+        )
+    else()
+        target_link_options(lua-xz-shared PRIVATE "LINKER:-undefined,dynamic_lookup")
+        target_link_options(lua-xz-shared PRIVATE "LINKER:-all_load")
+    endif()
 endif()
 
 # tests

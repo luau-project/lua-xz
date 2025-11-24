@@ -593,7 +593,7 @@ jobs:
             };
 
   cmake-build:
-    name: Build
+    name: CMake Build
     runs-on: ${{ matrix.os }}
 
     defaults:
@@ -950,7 +950,7 @@ jobs:
           $install_prefix_bin = Join-Path -Path "${{ env.LUAROCKS_WINDOWS_DEPS_DIR }}" -ChildPath "bin";
           Add-Content "${{ github.path }}" "${install_prefix_bin}";
 
-      - name: Extract the Linux Kernel tarball and set environment variables to hold the their file names
+      - name: Extract the Linux Kernel tarball and set environment variables to hold their file names
         run: |
           $tar_file = "linux-${{ env.LINUX_KERNEL_MAJOR_VERSION }}.${{ env.LINUX_KERNEL_MINOR_VERSION }}.tar";
           $tarxz_file = $tar_file + ".xz";
