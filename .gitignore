@@ -7,4 +7,6 @@
 *.xz
 *.lzma
 .vscode
+build
+lzma-copy-of-README.md
 xz-copy-of-README.md
