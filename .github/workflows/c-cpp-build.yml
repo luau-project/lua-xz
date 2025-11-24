@@ -1,0 +1,162 @@
+name: C / C++
+
+on:
+  push:
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "CMakeLists.txt"
+      - "Makefile.mingw"
+      - "Makefile.msvc"
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "CMakeLists.txt"
+      - "Makefile.mingw"
+      - "Makefile.msvc"
+  workflow_dispatch:
+
+env:
+  ROCKSPEC_VERSION: 1.0.0
+  DEV_ROCKSPEC: lua-xz-dev-1.rockspec
+
+jobs:
+
+  c-cpp-build:
+    name: Build with C / C++
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: pwsh
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+
+        lua-version:
+          - 5.1
+          - 5.2
+          - 5.3
+          - 5.4
+
+        use-clang:
+          - true
+          - false
+
+        use-cpp:
+          - true
+          - false
+
+    steps:
+
+      - name: Set environment variable to hold the rockspec name
+        run: |
+          if ("${{ github.repository }}" -eq "luau-project/lua-xz" -and "${{ github.ref_name }}" -eq "v${{ env.ROCKSPEC_VERSION }}" -and "${{ github.ref }}" -eq "refs/tags/v${{ env.ROCKSPEC_VERSION }}")
+          {
+            Add-Content "${{ github.env }}" "ROCKSPEC=lua-xz-${{ env.ROCKSPEC_VERSION }}-1.rockspec";
+          }
+          else
+          {
+            Add-Content "${{ github.env }}" "ROCKSPEC=${{ env.DEV_ROCKSPEC }}";
+          }
+
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          path: lua-xz
+
+      - name: Install dependencies
+        run: sudo apt install -y liblzma-dev
+
+      - name: Install clang
+        if: ${{ matrix.use-clang }}
+        run: sudo apt install -y clang
+
+      - name: Setup Lua (clang++)
+        if: ${{ matrix.use-clang && matrix.use-cpp }}
+        uses: luau-project/setup-lua@4598c69e67a91a1621b5ab4aed54fd9ab82c3508 # v1.0.3
+        with:
+          cc: clang++
+          ld: clang++
+          ar: llvm-ar
+          ranlib: llvm-ranlib
+          lua-version: ${{ matrix.lua-version }}
+
+      - name: Setup Lua (clang)
+        if: ${{ matrix.use-clang && !matrix.use-cpp }}
+        uses: luau-project/setup-lua@4598c69e67a91a1621b5ab4aed54fd9ab82c3508 # v1.0.3
+        with:
+          cc: clang
+          ld: clang
+          ar: llvm-ar
+          ranlib: llvm-ranlib
+          lua-version: ${{ matrix.lua-version }}
+
+      - name: Setup Lua (g++)
+        if: ${{ !matrix.use-clang && matrix.use-cpp }}
+        uses: luau-project/setup-lua@4598c69e67a91a1621b5ab4aed54fd9ab82c3508 # v1.0.3
+        with:
+          cc: g++
+          ld: g++
+          lua-version: ${{ matrix.lua-version }}
+
+      - name: Setup Lua (gcc)
+        if: ${{ !matrix.use-clang && !matrix.use-cpp }}
+        uses: luau-project/setup-lua@4598c69e67a91a1621b5ab4aed54fd9ab82c3508 # v1.0.3
+        with:
+          cc: gcc
+          ld: gcc
+          lua-version: ${{ matrix.lua-version }}
+
+      - name: Lint rockspecs
+        working-directory: lua-xz
+        run: |
+          Get-ChildItem . -Recurse -File |
+            Where-Object Extension -Eq ".rockspec" |
+            Select-Object -ExpandProperty FullName |
+            Foreach-Object {
+              $color = (0x1b -as [char]) + "[36m";
+
+              Write-Host "Linting rockspec: ${color}$_";
+
+              luarocks lint "$_";
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                exit 1;
+              }
+            }
+
+      - name: Build lua-xz
+        working-directory: lua-xz
+        run: |
+          $rockspec = Get-ChildItem . -Recurse -File |
+            Where-Object Name -EQ "${{ env.ROCKSPEC }}" |
+            Select-Object -ExpandProperty FullName -First 1;
+
+          $color = (0x1b -as [char]) + "[36m";
+          Write-Host "Building rockspec file: ${color}${rockspec}";
+
+          luarocks make $rockspec;
+
+      - name: Run samples
+        working-directory: lua-xz
+        run: |
+          Get-ChildItem "samples" -Recurse -File |
+            Where-Object Extension -EQ ".lua" |
+            Select-Object -ExpandProperty FullName |
+            Foreach-Object {
+              $color = (0x1b -as [char]) + "[36m";
+
+              Write-Host "Running sample file: ${color}$_";
+
+              lua "$_";
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                exit 1;
+              }
+            };
