@@ -42,13 +42,10 @@ jobs:
           - 5.3
           - 5.4
 
-        use-clang:
-          - true
-          - false
-
-        use-cpp:
-          - true
-          - false
+        cc:
+          - g++
+          - clang
+          - clang++
 
     steps:
 
@@ -72,43 +69,14 @@ jobs:
         run: sudo apt install -y liblzma-dev
 
       - name: Install clang
-        if: ${{ matrix.use-clang }}
+        if: ${{ startsWith(matrix.cc, 'clang') }}
         run: sudo apt install -y clang
 
-      - name: Setup Lua (clang++)
-        if: ${{ matrix.use-clang && matrix.use-cpp }}
-        uses: luau-project/setup-lua@4598c69e67a91a1621b5ab4aed54fd9ab82c3508 # v1.0.3
+      - name: Setup Lua (${{ matrix.cc }})
+        uses: luau-project/setup-lua@fecb68a32b1ae8513752c1fd5c6f000e746578eb # v1.0.4
         with:
-          cc: clang++
-          ld: clang++
-          ar: llvm-ar
-          ranlib: llvm-ranlib
-          lua-version: ${{ matrix.lua-version }}
-
-      - name: Setup Lua (clang)
-        if: ${{ matrix.use-clang && !matrix.use-cpp }}
-        uses: luau-project/setup-lua@4598c69e67a91a1621b5ab4aed54fd9ab82c3508 # v1.0.3
-        with:
-          cc: clang
-          ld: clang
-          ar: llvm-ar
-          ranlib: llvm-ranlib
-          lua-version: ${{ matrix.lua-version }}
-
-      - name: Setup Lua (g++)
-        if: ${{ !matrix.use-clang && matrix.use-cpp }}
-        uses: luau-project/setup-lua@4598c69e67a91a1621b5ab4aed54fd9ab82c3508 # v1.0.3
-        with:
-          cc: g++
-          ld: g++
-          lua-version: ${{ matrix.lua-version }}
-
-      - name: Setup Lua (gcc)
-        if: ${{ !matrix.use-clang && !matrix.use-cpp }}
-        uses: luau-project/setup-lua@4598c69e67a91a1621b5ab4aed54fd9ab82c3508 # v1.0.3
-        with:
-          cc: gcc
-          ld: gcc
+          cc: ${{ matrix.cc }}
+          ld: ${{ matrix.cc }}
           lua-version: ${{ matrix.lua-version }}
 
       - name: Lint rockspecs

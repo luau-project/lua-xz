@@ -223,7 +223,7 @@ jobs:
           Add-Content "${{ github.env }}" "LINUX_KERNEL_TAR_XZ=${tarxz_file}";
 
       - name: Setup Lua
-        uses: luau-project/setup-lua@4598c69e67a91a1621b5ab4aed54fd9ab82c3508 # v1.0.3
+        uses: luau-project/setup-lua@fecb68a32b1ae8513752c1fd5c6f000e746578eb # v1.0.4
         with:
           lua-version: ${{ matrix.lua-version }}
 

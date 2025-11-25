@@ -37,7 +37,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Setup Lua
-        uses: luau-project/setup-lua@4598c69e67a91a1621b5ab4aed54fd9ab82c3508 # v1.0.3
+        uses: luau-project/setup-lua@fecb68a32b1ae8513752c1fd5c6f000e746578eb # v1.0.4
 
       - name: Make sure that tags from GitHub and rockspec are equal
         run: |
